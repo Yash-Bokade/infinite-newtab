@@ -150,7 +150,9 @@
     z-index: 1000;
     padding: 6px 14px;
     /* border: 1px solid var(--border); */
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 15px 0;
+    text-align: center;
     background: var(--bg);
     color: var(--text-h);
     font-size: 12px;
@@ -184,7 +186,8 @@
     width: 80%;
     max-width: 800px;
     height: 80vh;
-    border-radius: 12px;
+    corner-shape: bevel;
+    border-radius: 25px 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -232,7 +235,9 @@
     background: var(--accent);
     color: white;
     border: none;
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 15px 0;
+    text-align: center;
     cursor: pointer;
     font-weight: bold;
   }
@@ -301,7 +306,9 @@
     color: var(--text);
     font-size: 14px;
     padding: 2px 6px;
-    border-radius: 4px;
+    corner-shape: bevel;
+    border-radius: 8px 0;
+    text-align: center;
     transition: background 0.15s;
   }
   .lp-icon-btn:hover {
@@ -333,7 +340,9 @@
     box-sizing: border-box;
     padding: 5px 7px;
     /* border: 1px solid var(--border); */
-    border-radius: 6px;
+    corner-shape: bevel;
+    border-radius: 12px 0;
+    text-align: center;
     background: var(--code-bg);
     color: var(--text-h);
     font-size: 12px;
@@ -350,7 +359,9 @@
     box-sizing: border-box;
     padding: 5px 7px;
     /* border: 1px solid var(--border); */
-    border-radius: 6px;
+    corner-shape: bevel;
+    border-radius: 12px 0;
+    text-align: center;
     background: var(--code-bg);
     color: var(--text-h);
     font-family: var(--mono);
@@ -381,7 +392,9 @@
     width: 100%;
     padding: 7px;
     border: 1px solid rgba(220, 60, 60, 0.4);
-    border-radius: 6px;
+    corner-shape: bevel;
+    border-radius: 12px 0;
+    text-align: center;
     background: rgba(220, 60, 60, 0.07);
     color: #dc3c3c;
     font-size: 12px;
@@ -404,10 +417,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-align: center;
     gap: 4px;
     padding: 10px 6px;
     /* border: 1px solid var(--border); */
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 15px 0;
     background: var(--code-bg);
     color: var(--text-h);
     font-size: 11px;
@@ -490,7 +506,8 @@
   }
   .nr-node.container {
     /* border: 1px solid var(--border); */
-    border-radius: 10px;
+    corner-shape: bevel;
+    border-radius: 25px 0;
     padding: 8px;
     background: var(--code-bg);
     overflow: visible;
@@ -520,7 +537,8 @@
   }
   .nr-img-wrap {
     overflow: hidden;
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 20px 0;
     /* border: 1px solid var(--border); */
   }
   .nr-img-element {
@@ -538,7 +556,8 @@
     background: var(--code-bg);
     color: var(--text);
     font-size: 13px;
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 20px 0;
   }
   .nr-link-wrap {
     display: flex;
@@ -552,7 +571,8 @@
     height: 100%;
     text-decoration: none;
     color: inherit;
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 15px 0;
     overflow: hidden;
   }
   .nr-link-label {
@@ -586,7 +606,9 @@
     width: 100%;
     height: 100%;
     border: none;
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 15px 0;
+    text-align: center;
     color: var(--bg);
     font-size: 13px;
     font-weight: 600;
@@ -600,7 +622,6 @@
     transform: scale(0.98);
   }
   .nr-custom {
-    border-radius: 8px;
     background: var(--bg);
     box-shadow: var(--shadow);
     overflow: visible;
@@ -620,7 +641,9 @@
   }
   .nr-text-input {
     /* border: 1px solid var(--border); */
-    border-radius: 6px;
+    corner-shape: bevel;
+    border-radius: 12px 0;
+    text-align: center;
     padding: 4px 8px;
     font-family: inherit;
     font-size: 13px;
@@ -658,7 +681,8 @@
     box-sizing: border-box;
     background: rgba(220, 60, 60, 0.08);
     border: 1px solid rgba(220, 60, 60, 0.35);
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 15px 0;
     overflow: auto;
   }
   .cnr-error-text {
@@ -685,7 +709,8 @@
     height: 28px;
     padding: 2px;
     /* border: 1px solid var(--border); */
-    border-radius: 6px;
+    corner-shape: bevel;
+    border-radius: 8px 0;
     cursor: pointer;
     background: none;
   }
@@ -693,7 +718,8 @@
   /* ── Fetch / Storage nodes ─────────────────────────────────────────────────────── */
   .nr-fetch,
   .nr-storage {
-    border-radius: 8px;
+    corner-shape: bevel;
+    border-radius: 25px 0;
     overflow: hidden;
   }
 
@@ -720,6 +746,22 @@
     box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
   }
 }
+.cbutn {
+  background: var(--code-bg);
+  color: var(--text-h);
+  border: none;
+  corner-shape: bevel;
+  border-radius: 8px 0;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+.cbutn:hover {
+  opacity: 0.8;
+}
 .textp {
   font-family: "jetbrains mono";
   font-size: 32px;
@@ -727,4 +769,10 @@
   height: 100%;
   padding: 18px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  corner-shape: bevel;
+  border-radius: 20px 0;
 }

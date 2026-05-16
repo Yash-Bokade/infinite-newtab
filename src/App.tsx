@@ -76,6 +76,31 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // ── postMessage bridge for sandbox iframes ────────────────────────────────
+  // Sandboxed pages have an opaque origin and cannot use localStorage or
+  // window.open directly. They send hc: messages here and we handle them.
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      const d = e.data;
+      if (!d || typeof d.type !== "string") return;
+
+      if (d.type === "hc:storage:set") {
+        try { localStorage.setItem(d.key, JSON.stringify(d.value)); } catch {}
+
+      } else if (d.type === "hc:storage:get") {
+        let value = null;
+        try { const raw = localStorage.getItem(d.key); value = raw !== null ? JSON.parse(raw) : null; } catch {}
+        (e.source as Window)?.postMessage({ type: "hc:storage:result", id: d.id, value }, "*");
+
+      } else if (d.type === "hc:open") {
+        window.open(d.url as string, "_blank");
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
+
   return (
     <div id="app-root">
       {/* ── Left panel — hidden in view mode ── */}
