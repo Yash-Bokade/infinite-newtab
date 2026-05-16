@@ -1,0 +1,32 @@
+[
+    {
+        "name": "Title",
+        "key":"1",
+        "position": [500, 200],
+        "size": [120, 100],
+        "Zindex":1,
+        "class": "bg-green-500 text-black font-bold",
+        "is": "container",
+        "children": [] 
+    },{
+        "name": "Link",
+        "key":"2",
+        "position": [35, 100],
+        "size": [120, 20],
+        "Zindex":2,
+        "class": "",
+        "is": "link",
+        "link":"https://www.claude.ai",
+        "children":[
+            {
+                "name":" Claude",
+                "key":"2-1",
+                "position": [0, 0],
+                "size": [100, 100],
+                "Zindex":1,
+                "class": "bg-[#d77655] text-black font-bold",
+                "is": "image",
+                "link":"https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Claude-ai-icon.svg/960px-Claude-ai-icon.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20250728014952"            }
+        ]
+    }
+]
