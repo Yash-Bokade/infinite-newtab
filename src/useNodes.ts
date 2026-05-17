@@ -66,6 +66,60 @@ function updateNodeInTree(nodes: Node[], key: string, patch: Partial<Node>): Nod
   });
 }
 
+/** Bring a node to the front among its siblings by setting its Zindex to max + 1. */
+function bringNodeToFrontInTree(nodes: Node[], key: string): { newNodes: Node[]; updated: boolean } {
+  // Check if the node is at this level
+  const target = nodes.find((n) => n.key === key);
+  if (target) {
+    const maxZ = Math.max(...nodes.map((n) => n.Zindex || 0));
+    return {
+      newNodes: nodes.map((n) => (n.key === key ? { ...n, Zindex: maxZ + 1 } : n)),
+      updated: true,
+    };
+  }
+
+  // Otherwise search in children
+  let updated = false;
+  const newNodes = nodes.map((n) => {
+    if (updated || !n.children?.length) return n;
+    const res = bringNodeToFrontInTree(n.children, key);
+    if (res.updated) {
+      updated = true;
+      return { ...n, children: res.newNodes };
+    }
+    return n;
+  });
+
+  return { newNodes, updated };
+}
+
+/** Send a node to the back among its siblings by setting its Zindex to min - 1. */
+function sendNodeToBackInTree(nodes: Node[], key: string): { newNodes: Node[]; updated: boolean } {
+  // Check if the node is at this level
+  const target = nodes.find((n) => n.key === key);
+  if (target) {
+    const minZ = Math.min(...nodes.map((n) => n.Zindex || 0));
+    return {
+      newNodes: nodes.map((n) => (n.key === key ? { ...n, Zindex: minZ - 1 } : n)),
+      updated: true,
+    };
+  }
+
+  // Otherwise search in children
+  let updated = false;
+  const newNodes = nodes.map((n) => {
+    if (updated || !n.children?.length) return n;
+    const res = sendNodeToBackInTree(n.children, key);
+    if (res.updated) {
+      updated = true;
+      return { ...n, children: res.newNodes };
+    }
+    return n;
+  });
+
+  return { newNodes, updated };
+}
+
 /** Remove a node by key from the tree. */
 function removeNodeFromTree(nodes: Node[], key: string): Node[] {
   return nodes
@@ -129,9 +183,17 @@ export function useNodes() {
     [nodes]
   );
 
+  const bringToFront = useCallback((key: string) => {
+    setNodes((prev) => bringNodeToFrontInTree(prev, key).newNodes);
+  }, []);
+
+  const sendToBack = useCallback((key: string) => {
+    setNodes((prev) => sendNodeToBackInTree(prev, key).newNodes);
+  }, []);
+
   const resetToDefault = useCallback(() => {
     setNodes(DEFAULT_NODES);
   }, []);
 
-  return { nodes, updateNode, deleteNode, addNode, findNode, resetToDefault };
+  return { nodes, updateNode, deleteNode, addNode, findNode, bringToFront, sendToBack, resetToDefault };
 }

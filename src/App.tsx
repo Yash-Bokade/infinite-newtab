@@ -16,7 +16,7 @@ export default function App() {
     title: string;
   } | null>(null);
 
-  const { nodes, addNode, updateNode, deleteNode, findNode } = useNodes();
+  const { nodes, addNode, updateNode, deleteNode, findNode, bringToFront, sendToBack } = useNodes();
 
   // ── Canvas pan ────────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -120,6 +120,8 @@ export default function App() {
             }
           }}
           onDeselect={() => setSelectedKey(null)}
+          onBringToFront={bringToFront}
+          onSendToBack={sendToBack}
           onEditScript={(key, field, title) =>
             setEditingScript({ key, field, title })
           }

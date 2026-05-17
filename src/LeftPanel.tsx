@@ -97,10 +97,12 @@ function Select({ value, options, onChange }: SelectProps) {
 // ── Main component ───────────────────────────────────────────────────────────
 
 interface LeftPanelProps extends Props {
+  onBringToFront: (key: string) => void;
+  onSendToBack: (key: string) => void;
   onEditScript?: (key: string, field: keyof Node, title: string) => void;
 }
 
-export default function LeftPanel({ selected, onUpdate, onDelete, onAdd, onDeselect, onEditScript }: LeftPanelProps) {
+export default function LeftPanel({ selected, onUpdate, onDelete, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript }: LeftPanelProps) {
   const nodeTypes: NodeType[] = ["container", "text", "image", "link", "button", "custom", "progress", "radio", "checkbox", "input", "label", "fetch", "storage"];
 
   return (
@@ -182,11 +184,27 @@ export default function LeftPanel({ selected, onUpdate, onDelete, onAdd, onDesel
             </div>
 
             <Field label="Z-Index">
-              <Input
-                type="number"
-                value={selected.Zindex}
-                onChange={(v) => onUpdate(selected.key, { Zindex: +v })}
-              />
+              <div style={{ display: 'flex', gap: 4 }}>
+                <Input
+                  type="number"
+                  value={selected.Zindex}
+                  onChange={(v) => onUpdate(selected.key, { Zindex: +v })}
+                />
+                <button
+                  className="lp-icon-btn"
+                  title="Bring to Front"
+                  onClick={() => onBringToFront(selected.key)}
+                >
+                  ↑
+                </button>
+                <button
+                  className="lp-icon-btn"
+                  title="Send to Back"
+                  onClick={() => onSendToBack(selected.key)}
+                >
+                  ↓
+                </button>
+              </div>
             </Field>
 
             {/* Type-specific fields */}
