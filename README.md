@@ -2,6 +2,9 @@
 
 > this is a Webbrowser extension that allows user to customize their new tab page 
 
+
+[Installation](https://github.com/Yash-Bokade/infinite-newtab/blob/main/installation.md)
+
 Example
 <p align="center">
 <img width="1920" height="935" alt="image" src="https://github.com/user-attachments/assets/707e782e-a17c-4273-b890-3f0aaeeb7c19" />
