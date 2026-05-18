@@ -13,6 +13,7 @@ interface Props {
   mode?: "edit" | "view";
   /** True when this is a top-level node (positioned absolutely on canvas) */
   isRoot?: boolean;
+  onReparent?: (nodeKey: string, newParentKey: string | null) => void;
   allNodes: Node[];
 }
 
@@ -24,6 +25,7 @@ export default function NodeRenderer({
   mode = "edit",
   isRoot = false,
   allNodes,
+  onReparent,
 }: Props) {
   const canEdit = mode === "edit";
   const isSelected = selectedKey === node.key;
@@ -70,11 +72,44 @@ export default function NodeRenderer({
     });
   }
 
-  function handleDragEnd() {
+
+
+  function handleDragEnd(e: MouseEvent) {
+    e.preventDefault();
+    if (!dragState.current) return;
+
+    // Attempt reparenting
+    if (onReparent && canEdit) {
+      // Hide the current node temporarily so elementFromPoint doesn't hit it
+      const currentElement = document.querySelector(`[data-node-key="${node.key}"]`) as HTMLElement;
+      if (currentElement) currentElement.style.pointerEvents = 'none';
+
+      const dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+
+      if (currentElement) currentElement.style.pointerEvents = 'auto';
+
+      const containerNode = dropTarget?.closest('.nr-node.container') as HTMLElement;
+
+      if (containerNode) {
+        const targetId = containerNode.dataset.nodeKey;
+        if (targetId && targetId !== node.key) {
+           onReparent(node.key, targetId);
+        }
+      } else if (isRoot === false) {
+         // if dragged outside any container, maybe drop to root?
+         const worldEl = dropTarget?.closest('.world');
+         if (worldEl) {
+           onReparent(node.key, null);
+         }
+      }
+    }
+
     dragState.current = null;
     window.removeEventListener("mousemove", handleDragMove);
     window.removeEventListener("mouseup", handleDragEnd);
   }
+
+
 
   // ── Resize (only if node.resize === true) ─────────────────────────────────
   const resizeState = useRef<{
@@ -256,6 +291,7 @@ export default function NodeRenderer({
       onUpdate={onUpdate}
       mode={mode}
       isRoot={false}
+      onReparent={onReparent}
       allNodes={allNodes}
     />
   ));
@@ -280,6 +316,7 @@ export default function NodeRenderer({
   if (node.is === "container") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node container ${node.class} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -298,6 +335,7 @@ export default function NodeRenderer({
   if (node.is === "text") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-text ${node.class ?? ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -331,6 +369,7 @@ export default function NodeRenderer({
   if (node.is === "image") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-img-wrap ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -358,6 +397,7 @@ export default function NodeRenderer({
   if (node.is === "link") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-link-wrap ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -391,6 +431,7 @@ export default function NodeRenderer({
   if (node.is === "button") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-button ${node.class ?? ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -423,6 +464,7 @@ export default function NodeRenderer({
   if (node.is === "progress") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-progress ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -446,6 +488,7 @@ export default function NodeRenderer({
   if (node.is === "radio" || node.is === "checkbox") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-check ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -474,6 +517,7 @@ export default function NodeRenderer({
   if (node.is === "input") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-input ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -504,6 +548,7 @@ export default function NodeRenderer({
   if (node.is === "label") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-label ${node.class ?? ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -531,6 +576,7 @@ export default function NodeRenderer({
   if (node.is === "custom") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-custom ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -554,6 +600,7 @@ export default function NodeRenderer({
   if (node.is === "fetch") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-fetch ${node.class ?? ""} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -578,6 +625,7 @@ export default function NodeRenderer({
     const stKey = node.content || node.name;
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-storage ${node.class ?? ""} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
