@@ -1447,4 +1447,1220 @@ export default function Component() {
 
 ---
 
+## 31. Crypto Price Ticker
+
+Live fetch of Bitcoin, Ethereum, and Dogecoin prices from CoinGecko.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [prices, setPrices] = useState(null);
+  var [loading, setLoading] = useState(false);
+
+  function fetchPrices() {
+    setLoading(true);
+    fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,dogecoin&vs_currencies=usd")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setPrices(data);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchPrices(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <strong style={{ fontSize: 13 }}>Crypto Ticker</strong>
+        <button className="cbutn" style={{ padding: "4px 8px", fontSize: 10 }} onClick={fetchPrices}>{loading ? "..." : "Refresh"}</button>
+      </div>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+        {prices ? (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: "8px 0", cornerShape: "bevel" }}>
+              <span style={{ fontWeight: "bold", color: "#f7931a" }}>BTC</span>
+              <span>${prices.bitcoin.usd.toLocaleString()}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: "8px 0", cornerShape: "bevel" }}>
+              <span style={{ fontWeight: "bold", color: "#627eea" }}>ETH</span>
+              <span>${prices.ethereum.usd.toLocaleString()}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: "8px 0", cornerShape: "bevel" }}>
+              <span style={{ fontWeight: "bold", color: "#c2a633" }}>DOGE</span>
+              <span>${prices.dogecoin.usd.toLocaleString()}</span>
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: 12, textAlign: "center", opacity: 0.5, marginTop: 20 }}>Loading data...</div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 32. Random Dog Picture
+
+Because everyone needs a dog picture on their dashboard.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [img, setImg] = useState("");
+  var [loading, setLoading] = useState(false);
+
+  function fetchDog() {
+    setLoading(true);
+    fetch("https://dog.ceo/api/breeds/image/random")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setImg(data.message);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchDog(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 8, gap: 8, boxSizing: "border-box" }}>
+      <div style={{ flex: 1, borderRadius: "15px 0", cornerShape: "bevel", overflow: "hidden", background: "var(--code-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {loading ? <span style={{ fontSize: 12 }}>Loading...</span> : img ? <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+      </div>
+      <button className="cbutn" style={{ padding: 8 }} onClick={fetchDog}>New Dog</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 33. Bored? Activity Suggester
+
+Fetches a random activity from the Bored API.
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [activity, setActivity] = useState(null);
+  var [loading, setLoading] = useState(false);
+
+  function fetchActivity() {
+    setLoading(true);
+    fetch("https://www.boredapi.com/api/activity")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setActivity(data);
+        setLoading(false);
+      })
+      .catch(function() {
+        setActivity({ activity: "Go outside for a walk.", type: "relaxation" });
+        setLoading(false);
+      });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16, justifyContent: "center", gap: 16, boxSizing: "border-box", textAlign: "center" }}>
+      {activity ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ fontSize: 14, fontWeight: "bold" }}>{activity.activity}</div>
+          <div style={{ fontSize: 10, color: "var(--accent)", textTransform: "uppercase" }}>{activity.type}</div>
+        </div>
+      ) : (
+        <div style={{ fontSize: 14 }}>Bored?</div>
+      )}
+      <button className="cbutn" style={{ padding: 8, alignSelf: "center" }} onClick={fetchActivity}>
+        {loading ? "..." : "Suggest Activity"}
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
+## 34. Public IP Viewer
+
+Fetches your current public IP address via ipify.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [ip, setIp] = useState("Checking...");
+
+  function fetchIp() {
+    setIp("Checking...");
+    fetch("https://api.ipify.org?format=json")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setIp(data.ip); })
+      .catch(function() { setIp("Error"); });
+  }
+
+  useEffect(function() { fetchIp(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, justifyContent: "center", alignItems: "center", gap: 12, boxSizing: "border-box" }}>
+      <strong style={{ fontSize: 12, opacity: 0.6 }}>Your Public IP</strong>
+      <div className="textp" style={{ fontSize: 24, fontWeight: "bold", background: "rgba(0,0,0,0.2)", padding: "12px 24px" }}>
+        {ip}
+      </div>
+      <button className="cbutn" style={{ padding: "4px 12px", fontSize: 11 }} onClick={fetchIp}>Refresh</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 35. Kanye Quote Generator
+
+Inspirational quotes fetched from Kanye Rest.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [quote, setQuote] = useState("");
+  var [loading, setLoading] = useState(false);
+
+  function fetchKanye() {
+    setLoading(true);
+    fetch("https://api.kanye.rest")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setQuote(data.quote);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchKanye(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 20, justifyContent: "center", gap: 16, boxSizing: "border-box", textAlign: "center" }}>
+      <div style={{ fontSize: 16, fontStyle: "italic", fontWeight: "500" }}>"{quote || "..."}"</div>
+      <div style={{ fontSize: 12, color: "var(--accent)" }}>- Kanye West</div>
+      <button className="cbutn" style={{ padding: "6px 12px", alignSelf: "center" }} onClick={fetchKanye}>
+        {loading ? "..." : "Next"}
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
+## 36. Cat Facts
+
+Everyone loves cat facts!
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [fact, setFact] = useState("");
+  var [loading, setLoading] = useState(false);
+
+  function fetchCatFact() {
+    setLoading(true);
+    fetch("https://catfact.ninja/fact")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setFact(data.fact);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchCatFact(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16, justifyContent: "center", gap: 12, boxSizing: "border-box", textAlign: "center" }}>
+      <strong style={{ fontSize: 14, color: "var(--accent)" }}>🐈 Cat Fact</strong>
+      <div style={{ fontSize: 13, flex: 1, display: "flex", alignItems: "center" }}>{fact || "..."}</div>
+      <button className="cbutn" style={{ padding: 8, alignSelf: "center" }} onClick={fetchCatFact}>
+        {loading ? "..." : "Another"}
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
+## 37. SpaceX Next Launch
+
+Fetches data about the upcoming SpaceX rocket launch.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [launch, setLaunch] = useState(null);
+  var [loading, setLoading] = useState(true);
+
+  useEffect(function() {
+    fetch("https://api.spacexdata.com/v4/launches/next")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setLaunch(data);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }, []);
+
+  if (loading) return <div style={{ padding: 16, textAlign: "center" }}>Fetching SpaceX...</div>;
+  if (!launch) return <div style={{ padding: 16, textAlign: "center", color: "#dc3c3c" }}>Error fetching data.</div>;
+
+  var date = new Date(launch.date_utc).toLocaleDateString();
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <strong style={{ fontSize: 14, color: "var(--accent)" }}>🚀 Next SpaceX Launch</strong>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: "12px 0", cornerShape: "bevel" }}>
+        <div style={{ fontSize: 14, fontWeight: "bold" }}>{launch.name}</div>
+        <div style={{ fontSize: 12 }}>Flight: #{launch.flight_number}</div>
+        <div style={{ fontSize: 12 }}>Date: {date}</div>
+      </div>
+      <button className="cbutn" style={{ padding: 8 }} onClick={function() { window.__hc.open(launch.links.webcast || "https://spacex.com") }}>Watch Webcast</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 38. Nationalize Name API
+
+Type a name and it predicts the nationality probabilities.
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [name, setName] = useState("");
+  var [data, setData] = useState([]);
+  var [loading, setLoading] = useState(false);
+
+  function predict() {
+    if (!name.trim()) return;
+    setLoading(true);
+    fetch("https://api.nationalize.io?name=" + name.trim())
+      .then(function(res) { return res.json(); })
+      .then(function(json) {
+        setData(json.country || []);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <div style={{ display: "flex", gap: 4 }}>
+        <input className="nr-text-input" style={{ flex: 1 }} placeholder="First Name" value={name} onChange={function(e){setName(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter") predict()}} />
+        <button className="cbutn" onClick={predict}>{loading ? "..." : "Guess"}</button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+        {data.length === 0 && !loading && <div style={{ fontSize: 12, textAlign: "center", opacity: 0.5 }}>Enter a name to predict nationality!</div>}
+        {data.map(function(c, i) { return (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: 6, background: "rgba(0,0,0,0.2)", borderRadius: "6px 0", cornerShape: "bevel", fontSize: 12 }}>
+            <span style={{ fontWeight: "bold" }}>{c.country_id}</span>
+            <span style={{ color: "var(--accent)" }}>{(c.probability * 100).toFixed(1)}%</span>
+          </div>
+        ); })}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 39. Random User Profile Generator
+
+Generates a completely fake user identity.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [user, setUser] = useState(null);
+  var [loading, setLoading] = useState(false);
+
+  function fetchUser() {
+    setLoading(true);
+    fetch("https://randomuser.me/api/")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setUser(data.results[0]);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchUser(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      {user ? (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, textAlign: "center" }}>
+          <img src={user.picture.large} style={{ width: 64, height: 64, borderRadius: "50%", border: "2px solid var(--accent)" }} />
+          <strong style={{ fontSize: 14 }}>{user.name.first} {user.name.last}</strong>
+          <div style={{ fontSize: 11, opacity: 0.8 }}>{user.email}</div>
+          <div style={{ fontSize: 11, color: "var(--accent)" }}>{user.location.city}, {user.location.country}</div>
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>Loading identity...</div>
+      )}
+      <button className="cbutn" style={{ padding: 8 }} onClick={fetchUser}>Generate New Identity</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 40. Open-Meteo Local Weather
+
+Asks for browser geolocation, then fetches your exact local temperature!
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [temp, setTemp] = useState(null);
+  var [code, setCode] = useState(0);
+  var [status, setStatus] = useState("Locating...");
+
+  function fetchWeather() {
+    setTemp(null);
+    if (!navigator.geolocation) {
+      setStatus("Geolocation not supported.");
+      return;
+    }
+    setStatus("Locating...");
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        setStatus("Fetching weather...");
+        var lat = pos.coords.latitude;
+        var lon = pos.coords.longitude;
+        fetch("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current_weather=true")
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            setTemp(data.current_weather.temperature);
+            setCode(data.current_weather.weathercode);
+            setStatus("");
+          })
+          .catch(function() { setStatus("Weather error"); });
+      },
+      function() { setStatus("Location denied."); }
+    );
+  }
+
+  useEffect(function() { fetchWeather(); }, []);
+
+  var emoji = "🌤️";
+  if (code === 0) emoji = "☀️";
+  else if (code >= 1 && code <= 3) emoji = "⛅";
+  else if (code >= 51 && code <= 67) emoji = "🌧️";
+  else if (code >= 71 && code <= 82) emoji = "❄️";
+  else if (code >= 95) emoji = "⛈️";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16, justifyContent: "center", alignItems: "center", gap: 12, boxSizing: "border-box" }}>
+      <strong style={{ fontSize: 14, opacity: 0.7 }}>Local Weather</strong>
+      {temp !== null ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 48 }}>{emoji}</span>
+          <span className="textp" style={{ fontSize: 32, padding: "8px 16px" }}>{temp}°C</span>
+        </div>
+      ) : (
+        <div style={{ fontSize: 12 }}>{status}</div>
+      )}
+      <button className="cbutn" style={{ padding: "4px 8px", fontSize: 10, marginTop: 8 }} onClick={fetchWeather}>Refresh Location</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 41. Random Advice Slip
+
+Need some wisdom? Ask the Advice API.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [advice, setAdvice] = useState("Loading...");
+
+  function fetchAdvice() {
+    setAdvice("...");
+    fetch("https://api.adviceslip.com/advice?" + Math.random()) // cache buster
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setAdvice(data.slip.advice); })
+      .catch(function() { setAdvice("Failed to get advice."); });
+  }
+
+  useEffect(function() { fetchAdvice(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16, justifyContent: "center", gap: 16, boxSizing: "border-box", textAlign: "center" }}>
+      <div style={{ fontSize: 16, fontWeight: "500", fontStyle: "italic" }}>"{advice}"</div>
+      <button className="cbutn" style={{ padding: "6px 12px", alignSelf: "center" }} onClick={fetchAdvice}>New Advice</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 42. Yes/No Decision Maker
+
+Let the API decide your fate. With an animated GIF!
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [data, setData] = useState(null);
+  var [loading, setLoading] = useState(false);
+
+  function decide() {
+    setLoading(true);
+    fetch("https://yesno.wtf/api")
+      .then(function(res) { return res.json(); })
+      .then(function(json) {
+        setData(json);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 8, gap: 8, boxSizing: "border-box" }}>
+      <div style={{ flex: 1, borderRadius: "15px 0", cornerShape: "bevel", overflow: "hidden", background: "var(--code-bg)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+        {data && <img src={data.image} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.6 }} />}
+        {data && <div style={{ position: "absolute", fontSize: 48, fontWeight: "bold", textTransform: "uppercase", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{data.answer}</div>}
+      </div>
+      <button className="cbutn" style={{ padding: 12, fontSize: 14 }} onClick={decide}>{loading ? "Thinking..." : "Should I Do It?"}</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 43. Genderize Name
+
+Predicts gender based on a first name.
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [name, setName] = useState("");
+  var [result, setResult] = useState(null);
+
+  function predict() {
+    if (!name.trim()) return;
+    fetch("https://api.genderize.io?name=" + name.trim())
+      .then(function(res) { return res.json(); })
+      .then(function(json) { setResult(json); })
+      .catch(function() {});
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <strong style={{ fontSize: 13 }}>Gender Guesser</strong>
+      <div style={{ display: "flex", gap: 4 }}>
+        <input className="nr-text-input" style={{ flex: 1 }} placeholder="Enter a name" value={name} onChange={function(e){setName(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter") predict()}} />
+        <button className="cbutn" onClick={predict}>Guess</button>
+      </div>
+      {result && result.gender && (
+        <div style={{ background: "rgba(0,0,0,0.2)", padding: 12, borderRadius: "8px 0", cornerShape: "bevel", textAlign: "center" }}>
+          <div style={{ fontSize: 18, textTransform: "capitalize", fontWeight: "bold" }}>{result.gender}</div>
+          <div style={{ fontSize: 11, color: "var(--accent)" }}>Probability: {(result.probability * 100).toFixed(0)}%</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## 44. Agify Name
+
+Predicts age based on a first name.
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [name, setName] = useState("");
+  var [result, setResult] = useState(null);
+
+  function predict() {
+    if (!name.trim()) return;
+    fetch("https://api.agify.io?name=" + name.trim())
+      .then(function(res) { return res.json(); })
+      .then(function(json) { setResult(json); })
+      .catch(function() {});
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <strong style={{ fontSize: 13 }}>Age Guesser</strong>
+      <div style={{ display: "flex", gap: 4 }}>
+        <input className="nr-text-input" style={{ flex: 1 }} placeholder="Enter a name" value={name} onChange={function(e){setName(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter") predict()}} />
+        <button className="cbutn" onClick={predict}>Guess</button>
+      </div>
+      {result && result.age && (
+        <div style={{ background: "rgba(0,0,0,0.2)", padding: 12, borderRadius: "8px 0", cornerShape: "bevel", textAlign: "center" }}>
+          <div style={{ fontSize: 11, opacity: 0.7 }}>Predicted Age</div>
+          <div style={{ fontSize: 24, fontWeight: "bold", color: "var(--accent)" }}>{result.age} years old</div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## 45. Random Coffee Pictures
+
+Need caffeine? Get a random coffee picture.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [img, setImg] = useState("");
+  var [loading, setLoading] = useState(false);
+
+  function fetchCoffee() {
+    setLoading(true);
+    fetch("https://coffee.alexflipnote.dev/random.json")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setImg(data.file);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchCoffee(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 8, gap: 8, boxSizing: "border-box" }}>
+      <div style={{ flex: 1, borderRadius: "15px 0", cornerShape: "bevel", overflow: "hidden", background: "var(--code-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {loading ? <span style={{ fontSize: 12 }}>Brewing...</span> : img ? <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+      </div>
+      <button className="cbutn" style={{ padding: 8 }} onClick={fetchCoffee}>☕ Pour Another</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 46. Random Fox Picture
+
+Random foxes from randomfox.ca.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [img, setImg] = useState("");
+  var [loading, setLoading] = useState(false);
+
+  function fetchFox() {
+    setLoading(true);
+    fetch("https://randomfox.ca/floof/")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setImg(data.image);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchFox(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 8, gap: 8, boxSizing: "border-box" }}>
+      <div style={{ flex: 1, borderRadius: "15px 0", cornerShape: "bevel", overflow: "hidden", background: "var(--code-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {loading ? <span style={{ fontSize: 12 }}>Sneaking...</span> : img ? <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+      </div>
+      <button className="cbutn" style={{ padding: 8 }} onClick={fetchFox}>🦊 New Fox</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 47. Programming Jokes
+
+Fetches single-line programming jokes from JokeAPI.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [joke, setJoke] = useState("Loading...");
+
+  function fetchJoke() {
+    setJoke("...");
+    fetch("https://v2.jokeapi.dev/joke/Programming?type=single")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setJoke(data.joke); })
+      .catch(function() { setJoke("Error."); });
+  }
+
+  useEffect(function() { fetchJoke(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16, justifyContent: "center", gap: 16, boxSizing: "border-box", textAlign: "center" }}>
+      <strong style={{ fontSize: 12, color: "var(--accent)" }}>{`<Joke />`}</strong>
+      <div style={{ fontSize: 14, fontWeight: "500", fontFamily: "monospace" }}>{joke}</div>
+      <button className="cbutn" style={{ padding: "6px 12px", alignSelf: "center" }} onClick={fetchJoke}>Next()</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 48. Current ISS Location
+
+Where is the International Space Station right now?
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [pos, setPos] = useState(null);
+
+  function fetchISS() {
+    setPos(null);
+    fetch("http://api.open-notify.org/iss-now.json")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setPos(data.iss_position); })
+      .catch(function() {});
+  }
+
+  useEffect(function() { fetchISS(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16, justifyContent: "center", alignItems: "center", gap: 12, boxSizing: "border-box" }}>
+      <strong style={{ fontSize: 14, opacity: 0.7 }}>🛰️ ISS Location</strong>
+      {pos ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, background: "rgba(0,0,0,0.2)", padding: "12px 24px", borderRadius: "8px 0", cornerShape: "bevel", textAlign: "center" }}>
+          <div><span style={{ fontSize: 11, opacity: 0.6 }}>LAT:</span> <span style={{ fontFamily: "monospace" }}>{pos.latitude}</span></div>
+          <div><span style={{ fontSize: 11, opacity: 0.6 }}>LON:</span> <span style={{ fontFamily: "monospace" }}>{pos.longitude}</span></div>
+        </div>
+      ) : (
+        <div style={{ fontSize: 12 }}>Scanning radar...</div>
+      )}
+      <button className="cbutn" style={{ padding: "4px 12px", fontSize: 11 }} onClick={fetchISS}>Ping Location</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 49. Number Math Fact
+
+Enter a number, get a weird math fact about it.
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [num, setNum] = useState("");
+  var [fact, setFact] = useState("Enter a number above.");
+
+  function fetchFact() {
+    if (!num) return;
+    setFact("...");
+    fetch("http://numbersapi.com/" + num + "/math?json")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setFact(data.text); })
+      .catch(function() { setFact("Error getting fact."); });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <div style={{ display: "flex", gap: 4 }}>
+        <input type="number" className="nr-text-input" style={{ flex: 1 }} placeholder="#" value={num} onChange={function(e){setNum(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter") fetchFact()}} />
+        <button className="cbutn" onClick={fetchFact}>Fact</button>
+      </div>
+      <div style={{ flex: 1, padding: 8, background: "rgba(0,0,0,0.2)", borderRadius: "8px 0", cornerShape: "bevel", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+        {fact}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 50. Random Meal Recipe
+
+Fetches a random cooking recipe from TheMealDB.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [meal, setMeal] = useState(null);
+
+  function fetchMeal() {
+    setMeal(null);
+    fetch("https://www.themealdb.com/api/json/v1/1/random.php")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setMeal(data.meals[0]); })
+      .catch(function() {});
+  }
+
+  useEffect(function() { fetchMeal(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      {meal ? (
+        <>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <img src={meal.strMealThumb} style={{ width: 60, height: 60, borderRadius: "8px 0", cornerShape: "bevel" }} />
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <strong style={{ fontSize: 14 }}>{meal.strMeal}</strong>
+              <span style={{ fontSize: 11, color: "var(--accent)" }}>{meal.strArea} • {meal.strCategory}</span>
+            </div>
+          </div>
+          <button className="cbutn" style={{ padding: "8px" }} onClick={function(){ window.__hc.open(meal.strSource || meal.strYoutube) }}>View Recipe</button>
+        </>
+      ) : (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>Loading menu...</div>
+      )}
+      <button className="cbutn" style={{ padding: "4px 8px", fontSize: 10, alignSelf: "center", opacity: 0.7 }} onClick={fetchMeal}>Reroll</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 51. Random Cocktail Recipe
+
+What to drink tonight? Let TheCocktailDB decide.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [drink, setDrink] = useState(null);
+
+  function fetchDrink() {
+    setDrink(null);
+    fetch("https://www.thecocktaildb.com/api/json/v1/1/random.php")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setDrink(data.drinks[0]); })
+      .catch(function() {});
+  }
+
+  useEffect(function() { fetchDrink(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      {drink ? (
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flex: 1 }}>
+          <img src={drink.strDrinkThumb} style={{ width: 60, height: 60, borderRadius: "8px 0", cornerShape: "bevel" }} />
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <strong style={{ fontSize: 14 }}>{drink.strDrink}</strong>
+            <span style={{ fontSize: 11, color: "var(--accent)" }}>{drink.strAlcoholic}</span>
+            <span style={{ fontSize: 11, opacity: 0.6 }}>Glass: {drink.strGlass}</span>
+          </div>
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>Mixing...</div>
+      )}
+      <button className="cbutn" onClick={fetchDrink}>Mix Another 🍸</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 52. Pokémon Sprite Fetcher
+
+Enter a Pokémon name to get its game sprite.
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [name, setName] = useState("pikachu");
+  var [sprite, setSprite] = useState("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png");
+
+  function fetchPoke() {
+    if (!name.trim()) return;
+    setSprite("");
+    fetch("https://pokeapi.co/api/v2/pokemon/" + name.trim().toLowerCase())
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setSprite(data.sprites.front_default); })
+      .catch(function() { setSprite(null); });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <div style={{ display: "flex", gap: 4 }}>
+        <input className="nr-text-input" style={{ flex: 1 }} placeholder="Pokemon Name" value={name} onChange={function(e){setName(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter") fetchPoke()}} />
+        <button className="cbutn" onClick={fetchPoke}>Catch</button>
+      </div>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)", borderRadius: "8px 0", cornerShape: "bevel" }}>
+        {sprite === "" ? <span>...</span> : sprite ? <img src={sprite} style={{ width: 96, height: 96, imageRendering: "pixelated" }} /> : <span style={{ color: "red", fontSize: 12 }}>Not found</span>}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 53. Star Wars Character Lookup
+
+Fetches random Star Wars characters.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [char, setChar] = useState(null);
+
+  function fetchChar() {
+    setChar(null);
+    var id = Math.floor(Math.random() * 82) + 1; // 82 characters
+    fetch("https://swapi.dev/api/people/" + id + "/")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setChar(data); })
+      .catch(function() { fetchChar(); }); // retry on 404
+  }
+
+  useEffect(function() { fetchChar(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16, justifyContent: "center", gap: 12, boxSizing: "border-box", textAlign: "center" }}>
+      <strong style={{ fontSize: 14, color: "#ffe81f" }}>STAR WARS</strong>
+      {char ? (
+        <div style={{ background: "rgba(0,0,0,0.3)", padding: 12, borderRadius: "8px 0", cornerShape: "bevel" }}>
+          <div style={{ fontSize: 18, fontWeight: "bold" }}>{char.name}</div>
+          <div style={{ fontSize: 12, opacity: 0.8 }}>Birth Year: {char.birth_year}</div>
+          <div style={{ fontSize: 12, opacity: 0.8 }}>Height: {char.height}cm</div>
+        </div>
+      ) : (
+        <div style={{ fontSize: 12, padding: 12 }}>Jumping to hyperspace...</div>
+      )}
+      <button className="cbutn" style={{ padding: 8, alignSelf: "center" }} onClick={fetchChar}>Randomize</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 54. Rick & Morty Characters
+
+Random characters from Rick and Morty.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [char, setChar] = useState(null);
+
+  function fetchChar() {
+    setChar(null);
+    var id = Math.floor(Math.random() * 826) + 1;
+    fetch("https://rickandmortyapi.com/api/character/" + id)
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setChar(data); })
+      .catch(function() {});
+  }
+
+  useEffect(function() { fetchChar(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      {char ? (
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flex: 1 }}>
+          <img src={char.image} style={{ width: 64, height: 64, borderRadius: "8px 0", cornerShape: "bevel" }} />
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <strong style={{ fontSize: 14 }}>{char.name}</strong>
+            <span style={{ fontSize: 11, color: char.status === "Alive" ? "#55cc55" : "#cc5555" }}>{char.status} - {char.species}</span>
+            <span style={{ fontSize: 11, opacity: 0.6 }}>{char.location.name}</span>
+          </div>
+        </div>
+      ) : (
+        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>Opening portal...</div>
+      )}
+      <button className="cbutn" onClick={fetchChar}>Get Schwifty</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 55. Currency Exchange Rates (Base USD)
+
+Live fetch of Euro, GBP, and JPY against the USD.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [rates, setRates] = useState(null);
+
+  function fetchRates() {
+    setRates(null);
+    fetch("https://open.er-api.com/v6/latest/USD")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setRates(data.rates); })
+      .catch(function() {});
+  }
+
+  useEffect(function() { fetchRates(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <strong style={{ fontSize: 13 }}>$1 USD Equals:</strong>
+        <button className="cbutn" style={{ padding: "4px 8px", fontSize: 10 }} onClick={fetchRates}>🔄</button>
+      </div>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+        {rates ? (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: "8px 0", cornerShape: "bevel" }}>
+              <span style={{ fontWeight: "bold" }}>EUR 💶</span>
+              <span>€{rates.EUR.toFixed(2)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: "8px 0", cornerShape: "bevel" }}>
+              <span style={{ fontWeight: "bold" }}>GBP 💷</span>
+              <span>£{rates.GBP.toFixed(2)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", background: "rgba(0,0,0,0.2)", padding: 8, borderRadius: "8px 0", cornerShape: "bevel" }}>
+              <span style={{ fontWeight: "bold" }}>JPY 💴</span>
+              <span>¥{rates.JPY.toFixed(2)}</span>
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: 12, textAlign: "center", opacity: 0.5, marginTop: 20 }}>Fetching market data...</div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## 56. Anime Waifu Generator
+
+Fetches random SFW anime pictures from waifu.pics.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [img, setImg] = useState("");
+  var [loading, setLoading] = useState(false);
+
+  function fetchImg() {
+    setLoading(true);
+    fetch("https://api.waifu.pics/sfw/waifu")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setImg(data.url);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchImg(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 8, gap: 8, boxSizing: "border-box" }}>
+      <div style={{ flex: 1, borderRadius: "15px 0", cornerShape: "bevel", overflow: "hidden", background: "var(--code-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {loading ? <span style={{ fontSize: 12 }}>Loading...</span> : img ? <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+      </div>
+      <button className="cbutn" style={{ padding: 8 }} onClick={fetchImg}>Next Waifu</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 57. Random Duck Picture
+
+More animals! Quack.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [img, setImg] = useState("");
+  var [loading, setLoading] = useState(false);
+
+  function fetchDuck() {
+    setLoading(true);
+    fetch("https://random-d.uk/api/v2/random")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setImg(data.url);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  useEffect(function() { fetchDuck(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 8, gap: 8, boxSizing: "border-box" }}>
+      <div style={{ flex: 1, borderRadius: "15px 0", cornerShape: "bevel", overflow: "hidden", background: "var(--code-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {loading ? <span style={{ fontSize: 12 }}>Quack...</span> : img ? <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+      </div>
+      <button className="cbutn" style={{ padding: 8 }} onClick={fetchDuck}>🦆 New Duck</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 58. RoboHash Avatar Generator
+
+Type anything to deterministically generate a robot avatar.
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [text, setText] = useState("infinite-canvas");
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box", alignItems: "center" }}>
+      <input className="nr-text-input" style={{ width: "100%" }} placeholder="Type to generate..." value={text} onChange={function(e){setText(e.target.value)}} />
+      
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <img 
+          src={"https://robohash.org/" + encodeURIComponent(text || "empty") + "?set=set1"} 
+          style={{ width: 100, height: 100, background: "rgba(255,255,255,0.1)", borderRadius: "50%" }} 
+        />
+      </div>
+      <div style={{ fontSize: 11, opacity: 0.6 }}>RoboHash API</div>
+    </div>
+  );
+}
+```
+
+---
+
+## 59. Chuck Norris Facts
+
+Tough jokes.
+
+```jsx
+import React, { useState, useEffect } from "react";
+
+export default function Component() {
+  var [joke, setJoke] = useState("...");
+
+  function fetchJoke() {
+    setJoke("...");
+    fetch("https://api.chucknorris.io/jokes/random")
+      .then(function(res) { return res.json(); })
+      .then(function(data) { setJoke(data.value); })
+      .catch(function() {});
+  }
+
+  useEffect(function() { fetchJoke(); }, []);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 16, justifyContent: "center", gap: 16, boxSizing: "border-box", textAlign: "center" }}>
+      <strong style={{ fontSize: 16, color: "#d25a22" }}>🤠 Chuck Norris</strong>
+      <div style={{ fontSize: 13, flex: 1, display: "flex", alignItems: "center", fontWeight: "500" }}>"{joke}"</div>
+      <button className="cbutn" style={{ padding: "6px 12px", alignSelf: "center" }} onClick={fetchJoke}>Next Fact</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 60. GitHub User Repositories Lookup
+
+Fetch a GitHub user's top public repos.
+
+```jsx
+import React, { useState } from "react";
+
+export default function Component() {
+  var [user, setUser] = useState("facebook");
+  var [repos, setRepos] = useState([]);
+  var [loading, setLoading] = useState(false);
+
+  function fetchRepos() {
+    if (!user.trim()) return;
+    setLoading(true);
+    fetch("https://api.github.com/users/" + user.trim() + "/repos?sort=updated&per_page=4")
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        setRepos(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(function() { setLoading(false); });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: 12, gap: 12, boxSizing: "border-box" }}>
+      <div style={{ display: "flex", gap: 4 }}>
+        <input className="nr-text-input" style={{ flex: 1 }} placeholder="GitHub Username" value={user} onChange={function(e){setUser(e.target.value)}} onKeyDown={function(e){if(e.key==="Enter") fetchRepos()}} />
+        <button className="cbutn" onClick={fetchRepos}>Search</button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+        {loading && <div style={{ textAlign: "center", fontSize: 12 }}>Loading repos...</div>}
+        {!loading && repos.length === 0 && <div style={{ textAlign: "center", fontSize: 12, opacity: 0.5 }}>No repos found</div>}
+        {repos.map(function(r) { return (
+          <div key={r.id} style={{ display: "flex", flexDirection: "column", padding: 8, background: "rgba(0,0,0,0.2)", borderRadius: "8px 0", cornerShape: "bevel" }}>
+            <span style={{ fontWeight: "bold", fontSize: 12, color: "var(--accent)", cursor: "pointer" }} onClick={function(){window.__hc.open(r.html_url)}}>{r.name}</span>
+            <span style={{ fontSize: 10, opacity: 0.7 }}>⭐ {r.stargazers_count} | 🍴 {r.forks_count}</span>
+          </div>
+        ); })}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
 *(More components can be added as needed. Remember to always use the ES5 `function()` syntax and rely on standard React hooks and the `window.__hc.storage` bridge!)*
