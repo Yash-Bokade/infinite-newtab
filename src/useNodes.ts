@@ -191,9 +191,99 @@ export function useNodes() {
     setNodes((prev) => sendNodeToBackInTree(prev, key).newNodes);
   }, []);
 
+
+  const reparentNode = useCallback((key: string, newParentId: string | null) => {
+    setNodes((prev) => {
+      function getAbsolutePosition(list: Node[], targetKey: string, currentPos: [number, number] = [0, 0]): [number, number] | null {
+        for (const n of list) {
+          const absPos: [number, number] = [currentPos[0] + n.position[0], currentPos[1] + n.position[1]];
+          if (n.key === targetKey) return absPos;
+          if (n.children) {
+            const found = getAbsolutePosition(n.children, targetKey, absPos);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+
+      function getParentId(list: Node[], targetKey: string, parentKey: string | null = null): string | null | undefined {
+        for (const n of list) {
+          if (n.key === targetKey) return parentKey;
+          if (n.children) {
+            const found = getParentId(n.children, targetKey, n.key);
+            if (found !== undefined) return found;
+          }
+        }
+        return undefined;
+      }
+
+      const currentParentId = getParentId(prev, key, null);
+      if (currentParentId === undefined) return prev; // node not found
+      if (currentParentId === newParentId) return prev; // no change
+
+      const nodeAbsPos = getAbsolutePosition(prev, key);
+      let newParentAbsPos: [number, number] | null = [0, 0];
+
+      if (newParentId) {
+        newParentAbsPos = getAbsolutePosition(prev, newParentId);
+        if (!newParentAbsPos) return prev;
+      }
+
+      let newRelativePos: [number, number] = [0, 0];
+      if (nodeAbsPos && newParentAbsPos) {
+        newRelativePos = [nodeAbsPos[0] - newParentAbsPos[0], nodeAbsPos[1] - newParentAbsPos[1]];
+      }
+
+      let nodeToMove: Node | null = null;
+      function searchAndRemove(list: Node[]): Node[] {
+        return list.filter((n) => {
+          if (n.key === key) {
+            nodeToMove = { ...n, position: newRelativePos };
+            return false;
+          }
+          return true;
+        }).map((n) => {
+          if (n.children?.length) {
+            return { ...n, children: searchAndRemove(n.children) };
+          }
+          return n;
+        });
+      }
+
+      const withoutNode = searchAndRemove(prev);
+      if (!nodeToMove) return prev;
+
+      function isDescendant(n: Node, targetId: string): boolean {
+        if (n.key === targetId) return true;
+        return n.children?.some(c => isDescendant(c, targetId)) ?? false;
+      }
+      if (newParentId && isDescendant(nodeToMove, newParentId)) {
+        return prev;
+      }
+
+      if (!newParentId) {
+        return [...withoutNode, nodeToMove];
+      }
+
+      function insertIntoTree(list: Node[]): Node[] {
+        return list.map((n) => {
+          if (n.key === newParentId) {
+            return { ...n, children: [...(n.children || []), nodeToMove!] };
+          }
+          if (n.children && n.children.length > 0) {
+            return { ...n, children: insertIntoTree(n.children) };
+          }
+          return n;
+        });
+      }
+
+      return insertIntoTree(withoutNode);
+    });
+  }, []);
+
   const resetToDefault = useCallback(() => {
     setNodes(DEFAULT_NODES);
   }, []);
 
-  return { nodes, updateNode, deleteNode, addNode, findNode, bringToFront, sendToBack, resetToDefault };
+  return { nodes, updateNode, deleteNode, addNode, findNode, bringToFront, sendToBack, resetToDefault, reparentNode };
 }
