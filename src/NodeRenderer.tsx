@@ -14,6 +14,7 @@ interface Props {
   /** True when this is a top-level node (positioned absolutely on canvas) */
   isRoot?: boolean;
   allNodes: Node[];
+  onReparent?: (nodeKey: string, newParentKey: string | null) => void;
 }
 
 export default function NodeRenderer({
@@ -24,6 +25,7 @@ export default function NodeRenderer({
   mode = "edit",
   isRoot = false,
   allNodes,
+  onReparent,
 }: Props) {
   const canEdit = mode === "edit";
   const isSelected = selectedKey === node.key;
@@ -70,7 +72,42 @@ export default function NodeRenderer({
     });
   }
 
-  function handleDragEnd() {
+  function handleDragEnd(e: MouseEvent) {
+    if (dragState.current && onReparent) {
+      // Find what we dropped onto (ignoring ourselves if we could)
+      // Usually, dragging moves the node under the cursor, but we can temporarily set pointer-events none
+      // or just look through elementsFromPoint.
+      const elements = document.elementsFromPoint(e.clientX, e.clientY);
+      let targetContainerKey: string | null = null;
+      let foundContainer = false;
+
+      for (const el of elements) {
+        if (!(el instanceof HTMLElement)) continue;
+
+        // Skip ourselves or elements belonging to us
+        const ownerKey = el.getAttribute("data-node-key");
+        if (ownerKey === node.key) continue;
+
+        // Found another node
+        if (el.classList.contains("container") && ownerKey) {
+           targetContainerKey = ownerKey;
+           foundContainer = true;
+           break;
+        }
+
+        // If we hit the root canvas before any container, it goes to root
+        if (el.classList.contains("canvas") || el.classList.contains("world")) {
+          targetContainerKey = null;
+          foundContainer = true;
+          break;
+        }
+      }
+
+      if (foundContainer) {
+        onReparent(node.key, targetContainerKey);
+      }
+    }
+
     dragState.current = null;
     window.removeEventListener("mousemove", handleDragMove);
     window.removeEventListener("mouseup", handleDragEnd);
@@ -257,6 +294,7 @@ export default function NodeRenderer({
       mode={mode}
       isRoot={false}
       allNodes={allNodes}
+      onReparent={onReparent}
     />
   ));
 
@@ -280,6 +318,7 @@ export default function NodeRenderer({
   if (node.is === "container") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node container ${node.class} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -298,6 +337,7 @@ export default function NodeRenderer({
   if (node.is === "text") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-text ${node.class ?? ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -331,6 +371,7 @@ export default function NodeRenderer({
   if (node.is === "image") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-img-wrap ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -358,6 +399,7 @@ export default function NodeRenderer({
   if (node.is === "link") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-link-wrap ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -391,6 +433,7 @@ export default function NodeRenderer({
   if (node.is === "button") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-button ${node.class ?? ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -423,6 +466,7 @@ export default function NodeRenderer({
   if (node.is === "progress") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-progress ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -446,6 +490,7 @@ export default function NodeRenderer({
   if (node.is === "radio" || node.is === "checkbox") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-check ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -474,6 +519,7 @@ export default function NodeRenderer({
   if (node.is === "input") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-input ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -504,6 +550,7 @@ export default function NodeRenderer({
   if (node.is === "label") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-label ${node.class ?? ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -531,6 +578,7 @@ export default function NodeRenderer({
   if (node.is === "custom") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-custom ${node.class}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -554,6 +602,7 @@ export default function NodeRenderer({
   if (node.is === "fetch") {
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-fetch ${node.class ?? ""} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
@@ -578,6 +627,7 @@ export default function NodeRenderer({
     const stKey = node.content || node.name;
     return (
       <div
+        data-node-key={node.key}
         className={`nr-node nr-storage ${node.class ?? ""} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
         onMouseDown={handleDragStart}
