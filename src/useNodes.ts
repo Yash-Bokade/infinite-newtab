@@ -191,9 +191,79 @@ export function useNodes() {
     setNodes((prev) => sendNodeToBackInTree(prev, key).newNodes);
   }, []);
 
+  const reparentNode = useCallback(
+    (nodeKey: string, newParentKey: string | null) => {
+      setNodes((prev) => {
+        // Find the node to reparent and its absolute position before moving
+        const searchAbs = (
+          list: Node[],
+          key: string,
+          accX: number,
+          accY: number
+        ): { node: Node; absX: number; absY: number } | null => {
+          for (const n of list) {
+            const curAbsX = accX + n.position[0];
+            const curAbsY = accY + n.position[1];
+            if (n.key === key) return { node: n, absX: curAbsX, absY: curAbsY };
+            const found = searchAbs(n.children ?? [], key, curAbsX, curAbsY);
+            if (found) return found;
+          }
+          return null;
+        };
+
+        const targetData = searchAbs(prev, nodeKey, 0, 0);
+        if (!targetData) return prev; // Node not found
+        const { node: targetNode, absX: targetAbsX, absY: targetAbsY } = targetData;
+
+        // Find the absolute position of the new parent
+        let newParentAbsX = 0;
+        let newParentAbsY = 0;
+        if (newParentKey) {
+          const newParentData = searchAbs(prev, newParentKey, 0, 0);
+          if (!newParentData) return prev; // Parent not found
+          newParentAbsX = newParentData.absX;
+          newParentAbsY = newParentData.absY;
+        }
+
+        // Calculate the new relative position
+        const newRelX = targetAbsX - newParentAbsX;
+        const newRelY = targetAbsY - newParentAbsY;
+
+        // 1. Remove the node from the tree
+        const treeWithoutTarget = removeNodeFromTree(prev, nodeKey);
+
+        // Update the target node's position
+        const updatedTargetNode: Node = {
+          ...targetNode,
+          position: [newRelX, newRelY],
+        };
+
+        // 2. Insert the node at the new location
+        if (!newParentKey) {
+          return [...treeWithoutTarget, updatedTargetNode];
+        }
+
+        function insertIntoTree(list: Node[]): Node[] {
+          return list.map((n) => {
+            if (n.key === newParentKey) {
+              return { ...n, children: [...(n.children || []), updatedTargetNode] };
+            }
+            if (n.children && n.children.length > 0) {
+              return { ...n, children: insertIntoTree(n.children) };
+            }
+            return n;
+          });
+        }
+
+        return insertIntoTree(treeWithoutTarget);
+      });
+    },
+    []
+  );
+
   const resetToDefault = useCallback(() => {
     setNodes(DEFAULT_NODES);
   }, []);
 
-  return { nodes, updateNode, deleteNode, addNode, findNode, bringToFront, sendToBack, resetToDefault };
+  return { nodes, updateNode, deleteNode, addNode, findNode, bringToFront, sendToBack, resetToDefault, reparentNode };
 }
