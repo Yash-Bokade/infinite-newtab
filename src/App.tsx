@@ -16,7 +16,7 @@ export default function App() {
     title: string;
   } | null>(null);
 
-  const { nodes, addNode, updateNode, deleteNode, findNode, bringToFront, sendToBack } = useNodes();
+  const { nodes, addNode, updateNode, deleteNode, findNode, bringToFront, sendToBack, reparentNode } = useNodes();
 
   // ── Canvas pan ────────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -158,6 +158,7 @@ export default function App() {
               selectedKey={selectedKey}
               onSelect={setSelectedKey}
               onUpdate={updateNode}
+              onReparent={reparentNode}
               mode={mode}
               isRoot
               allNodes={nodes}

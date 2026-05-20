@@ -10,6 +10,7 @@ interface Props {
   selectedKey: string | null;
   onSelect: (key: string) => void;
   onUpdate: (key: string, patch: Partial<Node>) => void;
+  onReparent?: (key: string, newParentKey: string | null, newPosition?: [number, number]) => void;
   mode?: "edit" | "view";
   /** True when this is a top-level node (positioned absolutely on canvas) */
   isRoot?: boolean;
@@ -21,6 +22,7 @@ export default function NodeRenderer({
   selectedKey,
   onSelect,
   onUpdate,
+  onReparent,
   mode = "edit",
   isRoot = false,
   allNodes,
@@ -55,7 +57,7 @@ export default function NodeRenderer({
       startNodeY: node.position[1],
     };
     window.addEventListener("mousemove", handleDragMove);
-    window.addEventListener("mouseup", handleDragEnd);
+    window.addEventListener("mouseup", handleDragEnd as EventListener);
   }
 
   function handleDragMove(e: MouseEvent) {
@@ -70,10 +72,51 @@ export default function NodeRenderer({
     });
   }
 
-  function handleDragEnd() {
+  function handleDragEnd(e: MouseEvent) {
+    if (!dragState.current) return;
     dragState.current = null;
     window.removeEventListener("mousemove", handleDragMove);
-    window.removeEventListener("mouseup", handleDragEnd);
+    window.removeEventListener("mouseup", handleDragEnd as EventListener);
+
+    // Look for drop targets
+    const elements = document.elementsFromPoint(e.clientX, e.clientY);
+    let targetContainerKey: string | null = null;
+    let isCanvas = false;
+
+    for (const el of elements) {
+      if (el.classList.contains("container")) {
+        const key = el.getAttribute("data-node-key");
+        if (key && key !== node.key) {
+          targetContainerKey = key;
+          break; // Found the top-most container
+        }
+      }
+      if (el.classList.contains("app-canvas-container")) {
+        isCanvas = true;
+      }
+    }
+
+    const nodeEl = document.querySelector(`[data-node-key="${node.key}"]`) as HTMLElement | null;
+
+    if (targetContainerKey !== null) {
+      const targetEl = document.querySelector(`[data-node-key="${targetContainerKey}"]`) as HTMLElement | null;
+      if (targetEl && nodeEl) {
+        const targetRect = targetEl.getBoundingClientRect();
+        const nodeRect = nodeEl.getBoundingClientRect();
+        const newX = nodeRect.left - targetRect.left;
+        const newY = nodeRect.top - targetRect.top;
+        if (onReparent) onReparent(node.key, targetContainerKey, [newX, newY]);
+      }
+    } else if (isCanvas) {
+      const worldEl = document.querySelector(".world") as HTMLElement | null;
+      if (worldEl && nodeEl) {
+        const worldRect = worldEl.getBoundingClientRect();
+        const nodeRect = nodeEl.getBoundingClientRect();
+        const newX = nodeRect.left - worldRect.left;
+        const newY = nodeRect.top - worldRect.top;
+        if (onReparent) onReparent(node.key, null, [newX, newY]);
+      }
+    }
   }
 
   // ── Resize (only if node.resize === true) ─────────────────────────────────
@@ -254,6 +297,7 @@ export default function NodeRenderer({
       selectedKey={selectedKey}
       onSelect={onSelect}
       onUpdate={onUpdate}
+      onReparent={onReparent}
       mode={mode}
       isRoot={false}
       allNodes={allNodes}
@@ -282,6 +326,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node container ${node.class} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -300,6 +345,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-text ${node.class ?? ""}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -333,6 +379,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-img-wrap ${node.class}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -360,6 +407,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-link-wrap ${node.class}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -393,6 +441,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-button ${node.class ?? ""}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -425,6 +474,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-progress ${node.class}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -448,6 +498,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-check ${node.class}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -476,6 +527,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-input ${node.class}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -506,6 +558,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-label ${node.class ?? ""}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -533,6 +586,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-custom ${node.class}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -556,6 +610,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-fetch ${node.class ?? ""} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
@@ -580,6 +635,7 @@ export default function NodeRenderer({
       <div
         className={`nr-node nr-storage ${node.class ?? ""} ${isSelected ? "nr-selected" : ""}`}
         style={wrapperStyle}
+        data-node-key={node.key}
         onMouseDown={handleDragStart}
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
