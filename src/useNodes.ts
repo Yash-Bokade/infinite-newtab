@@ -195,5 +195,79 @@ export function useNodes() {
     setNodes(DEFAULT_NODES);
   }, []);
 
-  return { nodes, updateNode, deleteNode, addNode, findNode, bringToFront, sendToBack, resetToDefault };
+  const reparentNode = useCallback((key: string, targetParentKey: string | null, newPosition?: [number, number]) => {
+    setNodes((prev) => {
+      // Find the node
+      function findNodeTree(list: Node[]): Node | null {
+        for (const n of list) {
+          if (n.key === key) return n;
+          if (n.children) {
+            const f = findNodeTree(n.children);
+            if (f) return f;
+          }
+        }
+        return null;
+      }
+      const nodeToMoveSource = findNodeTree(prev);
+      if (!nodeToMoveSource) return prev;
+
+      // Prevent dropping into itself or its descendants
+      if (targetParentKey !== null) {
+        function checkDescendant(n: Node): boolean {
+          if (n.key === targetParentKey) return true;
+          return n.children?.some(checkDescendant) ?? false;
+        }
+        if (checkDescendant(nodeToMoveSource)) {
+          return prev; // Invalid drop
+        }
+      }
+
+      // Also check if already in that parent
+      function findParent(list: Node[], childKey: string): Node | null {
+        for (const n of list) {
+          if (n.children?.some(c => c.key === childKey)) return n;
+          if (n.children) {
+            const p = findParent(n.children, childKey);
+            if (p) return p;
+          }
+        }
+        return null;
+      }
+      const currentParent = findParent(prev, key);
+      const currentParentKey = currentParent ? currentParent.key : null;
+      if (currentParentKey === targetParentKey) {
+        return prev; // No change
+      }
+
+      const nodeToMove = { ...nodeToMoveSource };
+      if (newPosition) {
+        nodeToMove.position = newPosition;
+      }
+
+      // 1. Remove from current position
+      let newNodes = removeNodeFromTree(prev, key);
+
+      // 2. Add to new position
+      if (targetParentKey === null) {
+        newNodes = [...newNodes, nodeToMove];
+      } else {
+        function insert(list: Node[]): Node[] {
+          return list.map(n => {
+            if (n.key === targetParentKey) {
+              return { ...n, children: [...(n.children || []), nodeToMove] };
+            }
+            if (n.children) {
+              return { ...n, children: insert(n.children) };
+            }
+            return n;
+          });
+        }
+        newNodes = insert(newNodes);
+      }
+
+      return newNodes;
+    });
+  }, []);
+
+  return { nodes, updateNode, deleteNode, addNode, findNode, bringToFront, sendToBack, reparentNode, resetToDefault };
 }
