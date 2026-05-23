@@ -8,7 +8,7 @@ import { getScriptExample, RELEVANT_EVENTS } from "./scriptExamples";
 
 export default function App() {
   const [mode, setMode] = useState<Mode>("view");
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [showExamples, setShowExamples] = useState(false);
   const [editingScript, setEditingScript] = useState<{
     key: string;
@@ -16,7 +16,7 @@ export default function App() {
     title: string;
   } | null>(null);
 
-  const { nodes, addNode, updateNode, deleteNode, findNode, bringToFront, sendToBack, reparentNode } = useNodes();
+  const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, findNode, bringToFront, sendToBack, reparentNode } = useNodes();
 
   // ── Canvas pan ────────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -58,11 +58,21 @@ export default function App() {
   // Clicking canvas background deselects
   function handleCanvasClick(e: React.MouseEvent) {
     if (!(e.target as HTMLElement).closest(".nr-node")) {
-      setSelectedKey(null);
+      setSelectedKeys([]);
     }
   }
 
-  const selectedNode = selectedKey ? findNode(selectedKey) : null;
+  const selectedNodes = selectedKeys.map(k => findNode(k)).filter((n): n is Node => n !== null);
+  const selectedNode = selectedNodes.length === 1 ? selectedNodes[0] : null;
+
+  function handleSelect(key: string, multi: boolean) {
+    setSelectedKeys((prev) => {
+      if (multi) {
+        return prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      }
+      return [key];
+    });
+  }
 
   // ── Ctrl+[ → enter edit mode ──────────────────────────────────────────────
   useEffect(() => {
@@ -106,11 +116,15 @@ export default function App() {
       {/* ── Left panel — hidden in view mode ── */}
       {mode === "edit" && (
         <LeftPanel
-          selected={selectedNode}
+          selectedNodes={selectedNodes}
           onUpdate={updateNode}
           onDelete={(key) => {
             deleteNode(key);
-            setSelectedKey(null);
+            setSelectedKeys((prev) => prev.filter(k => k !== key));
+          }}
+          onDeleteMultiple={(keys) => {
+            deleteMultipleNodes(keys);
+            setSelectedKeys((prev) => prev.filter((k) => !keys.includes(k)));
           }}
           onAdd={(node) => {
             if (selectedNode) {
@@ -119,7 +133,7 @@ export default function App() {
               addNode(node);
             }
           }}
-          onDeselect={() => setSelectedKey(null)}
+          onDeselect={() => setSelectedKeys([])}
           onBringToFront={bringToFront}
           onSendToBack={sendToBack}
           onEditScript={(key, field, title) =>
@@ -155,9 +169,10 @@ export default function App() {
             <NodeRenderer
               key={node.key}
               node={node}
-              selectedKey={selectedKey}
-              onSelect={setSelectedKey}
+              selectedKeys={selectedKeys}
+              onSelect={handleSelect}
               onUpdate={updateNode}
+              onUpdateMultiple={updateMultipleNodes}
               onReparent={reparentNode}
               mode={mode}
               isRoot

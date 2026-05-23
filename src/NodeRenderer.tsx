@@ -7,9 +7,10 @@ import DynamicText, { evaluateTemplate } from "./DynamicText";
 
 interface Props {
   node: Node;
-  selectedKey: string | null;
-  onSelect: (key: string) => void;
+  selectedKeys: string[];
+  onSelect: (key: string, multi: boolean) => void;
   onUpdate: (key: string, patch: Partial<Node>) => void;
+  onUpdateMultiple?: (updates: { key: string; patch: Partial<Node> }[]) => void;
   onReparent?: (key: string, newParentKey: string | null, newPosition?: [number, number]) => void;
   mode?: "edit" | "view";
   /** True when this is a top-level node (positioned absolutely on canvas) */
@@ -19,42 +20,78 @@ interface Props {
 
 export default function NodeRenderer({
   node,
-  selectedKey,
+  selectedKeys,
   onSelect,
   onUpdate,
+  onUpdateMultiple,
   onReparent,
   mode = "edit",
   isRoot = false,
   allNodes,
 }: Props) {
   const canEdit = mode === "edit";
-  const isSelected = selectedKey === node.key;
+  const isSelected = selectedKeys.includes(node.key);
 
   // ── Drag to move (only root nodes, in edit mode) ──────────────────────────
   const dragState = useRef<{
     startMouseX: number;
     startMouseY: number;
-    startNodeX: number;
-    startNodeY: number;
+    startPositions: { key: string, x: number, y: number }[];
   } | null>(null);
+
+  const wasDragged = useRef(false);
 
   function handleDragStart(e: React.MouseEvent) {
     if (!canEdit) return;
 
-    // If it's a child node:
-    // - Without Ctrl: child moves independently.
-    // - With Ctrl: we let the event bubble so the parent moves instead.
+    // If we click a child node and ctrl is NOT pressed, we want to select it.
+    // The old logic allowed child nodes to be selected, but prevented dragging them up the tree if ctrl was pressed.
+    // Actually, `if (!isRoot && e.ctrlKey) return;` means if we click a child node with Ctrl, let it bubble to the parent.
+    // So we don't handle selection or drag for the child. The parent will receive the event and become selected.
     if (!isRoot && e.ctrlKey) {
       return;
     }
 
     e.stopPropagation();
-    onSelect(node.key);
+    wasDragged.current = false;
+
+    // If the node we click to drag is not selected, select it (and clear others if no shift).
+    // If it IS selected, we keep current selection so we can drag all selected.
+    let activeSelection = selectedKeys;
+    if (!selectedKeys.includes(node.key)) {
+      onSelect(node.key, e.shiftKey);
+      if (!e.shiftKey) {
+        activeSelection = [node.key];
+      } else {
+        activeSelection = [...selectedKeys, node.key];
+      }
+    } else if (e.shiftKey) {
+      // If we shift+click a selected node, we want to deselect it, but normally dragging starts anyway.
+      // Standard behavior: shift+mousedown on selected node deselects it, but we might want to prevent drag if deselected.
+      // For simplicity, let's just trigger selection and skip drag if it gets deselected.
+      onSelect(node.key, true);
+      return;
+    }
+
+    // Find start positions for all actively selected nodes
+    const startPositions: { key: string, x: number, y: number }[] = [];
+
+    function findStarts(list: Node[]) {
+      for (const n of list) {
+        if (activeSelection.includes(n.key)) {
+          startPositions.push({ key: n.key, x: n.position[0], y: n.position[1] });
+        }
+        if (n.children) {
+          findStarts(n.children);
+        }
+      }
+    }
+    findStarts(allNodes);
+
     dragState.current = {
       startMouseX: e.clientX,
       startMouseY: e.clientY,
-      startNodeX: node.position[0],
-      startNodeY: node.position[1],
+      startPositions,
     };
     window.addEventListener("mousemove", handleDragMove);
     window.addEventListener("mouseup", handleDragEnd as EventListener);
@@ -64,16 +101,30 @@ export default function NodeRenderer({
     if (!dragState.current) return;
     const dx = e.clientX - dragState.current.startMouseX;
     const dy = e.clientY - dragState.current.startMouseY;
-    onUpdate(node.key, {
-      position: [
-        dragState.current.startNodeX + dx,
-        dragState.current.startNodeY + dy,
-      ],
-    });
+
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      wasDragged.current = true;
+    }
+
+    if (onUpdateMultiple) {
+      const updates = dragState.current.startPositions.map(pos => ({
+        key: pos.key,
+        patch: { position: [pos.x + dx, pos.y + dy] as [number, number] }
+      }));
+      onUpdateMultiple(updates);
+    } else {
+      onUpdate(node.key, {
+        position: [
+          (dragState.current.startPositions.find(p => p.key === node.key)?.x || node.position[0]) + dx,
+          (dragState.current.startPositions.find(p => p.key === node.key)?.y || node.position[1]) + dy,
+        ],
+      });
+    }
   }
 
   function handleDragEnd(e: MouseEvent) {
     if (!dragState.current) return;
+
     dragState.current = null;
     window.removeEventListener("mousemove", handleDragMove);
     window.removeEventListener("mouseup", handleDragEnd as EventListener);
@@ -255,7 +306,18 @@ export default function NodeRenderer({
   const handleWrapperClick = (e: React.MouseEvent) => {
     if (canEdit) {
       e.stopPropagation();
-      onSelect(node.key);
+
+      if (wasDragged.current) {
+        wasDragged.current = false;
+        return;
+      }
+
+      // If we just clicked a node without shift, and it was already selected along with others,
+      // mousedown kept the multi-selection for dragging, but since we didn't drag,
+      // click should select ONLY this node.
+      if (!e.shiftKey && selectedKeys.length > 1 && selectedKeys.includes(node.key)) {
+        onSelect(node.key, false);
+      }
     } else {
       runScript(node.onClick, e);
     }
@@ -294,9 +356,10 @@ export default function NodeRenderer({
     <NodeRenderer
       key={child.key}
       node={child}
-      selectedKey={selectedKey}
+      selectedKeys={selectedKeys}
       onSelect={onSelect}
       onUpdate={onUpdate}
+      onUpdateMultiple={onUpdateMultiple}
       onReparent={onReparent}
       mode={mode}
       isRoot={false}
