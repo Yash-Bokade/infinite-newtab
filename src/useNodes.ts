@@ -143,8 +143,28 @@ export function useNodes() {
     setNodes((prev) => updateNodeInTree(prev, key, patch));
   }, []);
 
+  const updateMultipleNodes = useCallback((updates: { key: string; patch: Partial<Node> }[]) => {
+    setNodes((prev) => {
+      let next = prev;
+      for (const { key, patch } of updates) {
+        next = updateNodeInTree(next, key, patch);
+      }
+      return next;
+    });
+  }, []);
+
   const deleteNode = useCallback((key: string) => {
     setNodes((prev) => removeNodeFromTree(prev, key));
+  }, []);
+
+  const deleteMultipleNodes = useCallback((keys: string[]) => {
+    setNodes((prev) => {
+      let next = prev;
+      for (const key of keys) {
+        next = removeNodeFromTree(next, key);
+      }
+      return next;
+    });
   }, []);
 
   const addNode = useCallback((node: Node, parentId?: string) => {
@@ -269,5 +289,5 @@ export function useNodes() {
     });
   }, []);
 
-  return { nodes, updateNode, deleteNode, addNode, findNode, bringToFront, sendToBack, reparentNode, resetToDefault };
+  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, addNode, findNode, bringToFront, sendToBack, reparentNode, resetToDefault };
 }

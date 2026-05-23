@@ -5,9 +5,10 @@ import { getScriptExample, RELEVANT_EVENTS } from "./scriptExamples";
 // ── helpers ─────────────────────────────────────────────────────────────────
 
 interface Props {
-  selected: Node | null;
+  selectedNodes: Node[];
   onUpdate: (key: string, patch: Partial<Node>) => void;
   onDelete: (key: string) => void;
+  onDeleteMultiple: (keys: string[]) => void;
   onAdd: (node: Node) => void;
   onDeselect: () => void;
 }
@@ -102,27 +103,46 @@ interface LeftPanelProps extends Props {
   onEditScript?: (key: string, field: keyof Node, title: string) => void;
 }
 
-export default function LeftPanel({ selected, onUpdate, onDelete, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript }: LeftPanelProps) {
+export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript }: LeftPanelProps) {
   const nodeTypes: NodeType[] = ["container", "text", "image", "link", "button", "custom", "progress", "radio", "checkbox", "input", "label", "fetch", "storage"];
+  const selected = selectedNodes.length === 1 ? selectedNodes[0] : null;
 
   return (
     <aside className="lp-root">
       {/* ── Properties ── */}
       <div className="lp-section lp-props">
         <div className="lp-section-header">
-          {selected ? (
+          {selectedNodes.length === 1 && selected ? (
             <>
               <span className="lp-section-title">
                 <span className="lp-badge">{selected.is}</span> {selected.name}
               </span>
               <button className="lp-icon-btn" title="Deselect" onClick={onDeselect}>✕</button>
             </>
+          ) : selectedNodes.length > 1 ? (
+            <>
+              <span className="lp-section-title">
+                <span className="lp-badge">{selectedNodes.length}</span> nodes selected
+              </span>
+              <button className="lp-icon-btn" title="Deselect All" onClick={onDeselect}>✕</button>
+            </>
           ) : (
             <span className="lp-section-title lp-muted">No node selected</span>
           )}
         </div>
 
-        {selected && (
+        {selectedNodes.length > 1 && (
+          <div className="lp-fields">
+             <button
+              className="lp-delete-btn"
+              onClick={() => onDeleteMultiple(selectedNodes.map(n => n.key))}
+            >
+              Delete all {selectedNodes.length} nodes
+            </button>
+          </div>
+        )}
+
+        {selectedNodes.length === 1 && selected && (
           <div className="lp-fields">
             <Field label="Name">
               <Input
