@@ -9,6 +9,7 @@ interface Props {
   onUpdate: (key: string, patch: Partial<Node>) => void;
   onDelete: (key: string) => void;
   onDeleteMultiple: (keys: string[]) => void;
+  onDuplicate: (keys: string[]) => void;
   onAdd: (node: Node) => void;
   onDeselect: () => void;
 }
@@ -103,7 +104,7 @@ interface LeftPanelProps extends Props {
   onEditScript?: (key: string, field: keyof Node, title: string) => void;
 }
 
-export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript }: LeftPanelProps) {
+export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onDuplicate, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript }: LeftPanelProps) {
   const nodeTypes: NodeType[] = ["container", "text", "image", "link", "button", "custom", "progress", "radio", "checkbox", "input", "label", "fetch", "storage"];
   const selected = selectedNodes.length === 1 ? selectedNodes[0] : null;
 
@@ -133,6 +134,12 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
 
         {selectedNodes.length > 1 && (
           <div className="lp-fields">
+            <button
+              className="lp-add-btn"
+              onClick={() => onDuplicate(selectedNodes.map(n => n.key))}
+            >
+              Duplicate {selectedNodes.length} nodes
+            </button>
              <button
               className="lp-delete-btn"
               onClick={() => onDeleteMultiple(selectedNodes.map(n => n.key))}
@@ -438,7 +445,13 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
               </label>
             </div>
 
-            {/* Danger */}
+            {/* Actions */}
+            <button
+              className="lp-add-btn"
+              onClick={() => onDuplicate([selected.key])}
+            >
+              Duplicate node
+            </button>
             <button
               className="lp-delete-btn"
               onClick={() => onDelete(selected.key)}

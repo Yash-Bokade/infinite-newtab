@@ -153,6 +153,60 @@ export function useNodes() {
     });
   }, []);
 
+  const duplicateNodes = useCallback((keys: string[]): string[] => {
+    const newSelectedKeys: string[] = [];
+    const rootKeyMap = new Map<string, string>();
+    for (const k of keys) {
+      const newKey = Math.random().toString(36).slice(2, 10);
+      rootKeyMap.set(k, newKey);
+      newSelectedKeys.push(newKey);
+    }
+
+    setNodes((prev) => {
+      let nextNodes = [...prev];
+
+      function deepCopyNode(node: Node, isRoot: boolean): Node {
+        const newKey = isRoot && rootKeyMap.has(node.key) ? rootKeyMap.get(node.key)! : Math.random().toString(36).slice(2, 10);
+        const copiedNode = {
+          ...node,
+          key: newKey,
+          position: isRoot ? [node.position[0] + 20, node.position[1] + 20] as [number, number] : [...node.position] as [number, number],
+          children: node.children ? node.children.map(c => deepCopyNode(c, false)) : []
+        };
+        return copiedNode;
+      }
+
+      for (const key of keys) {
+        // Find the parent list containing the node
+        function findAndDuplicate(list: Node[]): Node[] {
+          const index = list.findIndex(n => n.key === key);
+          if (index !== -1) {
+            const originalNode = list[index];
+            const copiedNode = deepCopyNode(originalNode, true);
+            const newList = [...list];
+            newList.splice(index + 1, 0, copiedNode);
+            return newList;
+          }
+          return list.map(n => {
+            if (n.children && n.children.length > 0) {
+              const newChildren = findAndDuplicate(n.children);
+              if (newChildren !== n.children) {
+                return { ...n, children: newChildren };
+              }
+            }
+            return n;
+          });
+        }
+
+        nextNodes = findAndDuplicate(nextNodes);
+      }
+
+      return nextNodes;
+    });
+
+    return newSelectedKeys;
+  }, []);
+
   const deleteNode = useCallback((key: string) => {
     setNodes((prev) => removeNodeFromTree(prev, key));
   }, []);
@@ -289,5 +343,5 @@ export function useNodes() {
     });
   }, []);
 
-  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, addNode, findNode, bringToFront, sendToBack, reparentNode, resetToDefault };
+  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, addNode, findNode, bringToFront, sendToBack, reparentNode, resetToDefault };
 }

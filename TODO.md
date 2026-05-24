@@ -6,7 +6,7 @@ Ideas and planned features to enhance the Home Canvas experience.
 - [x] **Drag-to-Nest**: Allow moving existing nodes into containers simply by dragging them over the container.
 - [x] **Z-Index Controls**: Add "Bring to Front" and "Send to Back" buttons to the property panel to manage overlapping nodes.
 - [x] **Multi-Select**: Allow selecting multiple nodes (Shift + Click) to move or delete them in bulk.
-- [ ] **Duplicate Node**: A quick button to clone an existing node with all its properties.
+- [x] **Duplicate Node**: A quick button to clone an existing node with all its properties.
 - [ ] **Context Menu**: Right-click menu for quick actions like Delete, Duplicate, and "Move to Parent".
 
 ## 🛠 Advanced Logic & Connectivity
