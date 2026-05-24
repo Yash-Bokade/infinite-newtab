@@ -16,7 +16,7 @@ export default function App() {
     title: string;
   } | null>(null);
 
-  const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, findNode, bringToFront, sendToBack, reparentNode } = useNodes();
+  const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, bringToFront, sendToBack, reparentNode } = useNodes();
 
   // ── Canvas pan ────────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -125,6 +125,10 @@ export default function App() {
           onDeleteMultiple={(keys) => {
             deleteMultipleNodes(keys);
             setSelectedKeys((prev) => prev.filter((k) => !keys.includes(k)));
+          }}
+          onDuplicate={(keys) => {
+            const newKeys = duplicateNodes(keys);
+            setSelectedKeys(newKeys);
           }}
           onAdd={(node) => {
             if (selectedNode) {
