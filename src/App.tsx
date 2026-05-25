@@ -15,8 +15,9 @@ export default function App() {
     field: keyof Node;
     title: string;
   } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, nodeKey: string } | null>(null);
 
-  const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, bringToFront, sendToBack, reparentNode } = useNodes();
+  const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
 
   // ── Canvas pan ────────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -27,6 +28,7 @@ export default function App() {
   const offset = useRef({ x: 0, y: 0 });
 
   function handleCanvasMouseDown(e: React.MouseEvent) {
+    setContextMenu(null);
     // Only start panning if clicked on the canvas bg itself, not a node
     if ((e.target as HTMLElement).closest(".nr-node")) return;
     isDragging.current = true;
@@ -57,9 +59,14 @@ export default function App() {
 
   // Clicking canvas background deselects
   function handleCanvasClick(e: React.MouseEvent) {
+    setContextMenu(null);
     if (!(e.target as HTMLElement).closest(".nr-node")) {
       setSelectedKeys([]);
     }
+  }
+
+  function handleContextMenu(e: React.MouseEvent, key: string) {
+    setContextMenu({ x: e.clientX, y: e.clientY, nodeKey: key });
   }
 
   const selectedNodes = selectedKeys.map(k => findNode(k)).filter((n): n is Node => n !== null);
@@ -81,9 +88,20 @@ export default function App() {
         e.preventDefault();
         setMode("edit");
       }
+      if (e.key === "Escape") {
+        setContextMenu(null);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    function onClick() {
+      setContextMenu(null);
+    }
+    window.addEventListener("click", onClick);
+    return () => window.removeEventListener("click", onClick);
   }, []);
 
   // ── postMessage bridge for sandbox iframes ────────────────────────────────
@@ -178,6 +196,7 @@ export default function App() {
               onUpdate={updateNode}
               onUpdateMultiple={updateMultipleNodes}
               onReparent={reparentNode}
+              onContextMenu={handleContextMenu}
               mode={mode}
               isRoot
               allNodes={nodes}
@@ -185,6 +204,72 @@ export default function App() {
           ))}
         </div>
       </div>
+
+      {/* ── Context Menu ── */}
+      {contextMenu && (
+        <div
+          className="context-menu"
+          style={{
+            position: "absolute",
+            left: contextMenu.x,
+            top: contextMenu.y,
+            zIndex: 9999,
+            background: "var(--panel-bg)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            padding: "4px 0",
+            minWidth: 150,
+            display: "flex",
+            flexDirection: "column",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="cm-btn"
+            style={{ padding: "6px 12px", background: "none", border: "none", color: "var(--text)", textAlign: "left", cursor: "pointer", fontSize: 12 }}
+            onClick={() => {
+              const keys = selectedKeys.includes(contextMenu.nodeKey) ? selectedKeys : [contextMenu.nodeKey];
+              const newKeys = duplicateNodes(keys);
+              setSelectedKeys(newKeys);
+              setContextMenu(null);
+            }}
+          >
+            Duplicate
+          </button>
+          <button
+            className="cm-btn"
+            style={{ padding: "6px 12px", background: "none", border: "none", color: "var(--text)", textAlign: "left", cursor: "pointer", fontSize: 12 }}
+            onClick={() => {
+              const keys = selectedKeys.includes(contextMenu.nodeKey) ? selectedKeys : [contextMenu.nodeKey];
+              for (const k of keys) {
+                const parent = findNodeParent(k);
+                if (parent) {
+                  const grandParent = findNodeParent(parent.key);
+                  // Reparent to grandparent (or null if parent was root)
+                  reparentNode(k, grandParent ? grandParent.key : null);
+                }
+              }
+              setContextMenu(null);
+            }}
+          >
+            Move to Parent
+          </button>
+          <div style={{ height: 1, background: "var(--border)", margin: "4px 0" }} />
+          <button
+            className="cm-btn"
+            style={{ padding: "6px 12px", background: "none", border: "none", color: "#ef4444", textAlign: "left", cursor: "pointer", fontSize: 12 }}
+            onClick={() => {
+              const keys = selectedKeys.includes(contextMenu.nodeKey) ? selectedKeys : [contextMenu.nodeKey];
+              deleteMultipleNodes(keys);
+              setSelectedKeys((prev) => prev.filter((k) => !keys.includes(k)));
+              setContextMenu(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
 
       {/* ── Script Editor Modal ── */}
       {editingScript &&

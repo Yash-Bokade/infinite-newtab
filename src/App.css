@@ -776,3 +776,7 @@
   corner-shape: bevel;
   border-radius: 20px 0;
 }
+.cm-btn:hover {
+  background: var(--accent);
+  color: #fff !important;
+}

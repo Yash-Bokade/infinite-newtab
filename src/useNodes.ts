@@ -257,6 +257,24 @@ export function useNodes() {
     [nodes]
   );
 
+  /** Find the parent of a node */
+  const findNodeParent = useCallback(
+    (key: string): Node | null => {
+      function searchParent(list: Node[], childKey: string): Node | null {
+        for (const n of list) {
+          if (n.children?.some((c) => c.key === childKey)) return n;
+          if (n.children) {
+            const found = searchParent(n.children, childKey);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+      return searchParent(nodes, key);
+    },
+    [nodes]
+  );
+
   const bringToFront = useCallback((key: string) => {
     setNodes((prev) => bringNodeToFrontInTree(prev, key).newNodes);
   }, []);
@@ -343,5 +361,5 @@ export function useNodes() {
     });
   }, []);
 
-  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, addNode, findNode, bringToFront, sendToBack, reparentNode, resetToDefault };
+  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, addNode, findNode, findNodeParent, bringToFront, sendToBack, reparentNode, resetToDefault };
 }

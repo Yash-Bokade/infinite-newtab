@@ -12,6 +12,7 @@ interface Props {
   onUpdate: (key: string, patch: Partial<Node>) => void;
   onUpdateMultiple?: (updates: { key: string; patch: Partial<Node> }[]) => void;
   onReparent?: (key: string, newParentKey: string | null, newPosition?: [number, number]) => void;
+  onContextMenu?: (e: React.MouseEvent, key: string) => void;
   mode?: "edit" | "view";
   /** True when this is a top-level node (positioned absolutely on canvas) */
   isRoot?: boolean;
@@ -25,6 +26,7 @@ export default function NodeRenderer({
   onUpdate,
   onUpdateMultiple,
   onReparent,
+  onContextMenu,
   mode = "edit",
   isRoot = false,
   allNodes,
@@ -328,6 +330,14 @@ export default function NodeRenderer({
   const handleMouseLeave = (e: React.MouseEvent) =>
     runScript(node.onMouseLeave, e);
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (canEdit && onContextMenu) {
+      e.preventDefault();
+      e.stopPropagation();
+      onContextMenu(e, node.key);
+    }
+  };
+
   // Remove stale individual fetch/storage effects — FetchNodeRunner handles fetch now
   // Storage read-on-mount
   useEffect(() => {
@@ -361,6 +371,7 @@ export default function NodeRenderer({
       onUpdate={onUpdate}
       onUpdateMultiple={onUpdateMultiple}
       onReparent={onReparent}
+      onContextMenu={onContextMenu}
       mode={mode}
       isRoot={false}
       allNodes={allNodes}
@@ -394,6 +405,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <span className="nr-container-label">{node.name}</span>
@@ -413,6 +425,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <pre
@@ -447,6 +460,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         {node.link ? (
@@ -475,6 +489,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         {/* The actual <a> is only active in view mode — children sit inside */}
@@ -509,6 +524,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <button
@@ -542,6 +558,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <progress
@@ -566,6 +583,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <input
@@ -595,6 +613,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <input
@@ -626,6 +645,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <label
@@ -654,6 +674,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <CustomNodeRunner
@@ -678,6 +699,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <FetchNodeRunner
@@ -703,6 +725,7 @@ export default function NodeRenderer({
         onClick={handleWrapperClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onContextMenu={handleContextMenu}
       >
         {selectDot}
         <div
