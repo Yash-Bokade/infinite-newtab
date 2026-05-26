@@ -4,6 +4,7 @@ import type { Node, FontProps } from "./types";
 import CustomNodeRunner from "./CustomNodeRunner";
 import FetchNodeRunner from "./FetchNodeRunner";
 import DynamicText, { evaluateTemplate } from "./DynamicText";
+import * as LucideIcons from "lucide-react";
 
 interface Props {
   node: Node;
@@ -515,6 +516,8 @@ export default function NodeRenderer({
   }
 
   if (node.is === "button") {
+    const IconComponent = node.icon ? (LucideIcons as Record<string, any>)[node.icon] : null;
+
     return (
       <div
         className={`nr-node nr-button ${node.class ?? ""}`}
@@ -529,7 +532,7 @@ export default function NodeRenderer({
         {selectDot}
         <button
           className="nr-btn-inner"
-          style={fontStyle}
+          style={{ ...fontStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
           onClick={(e) => {
             if (canEdit) return;
             e.stopPropagation();
@@ -540,6 +543,7 @@ export default function NodeRenderer({
             runScript(node.onClick, e);
           }}
         >
+          {IconComponent && <IconComponent size={fontStyle.fontSize || 16} />}
           {node.content ?? node.name}
         </button>
         {childNodes}
@@ -636,6 +640,8 @@ export default function NodeRenderer({
   }
 
   if (node.is === "label") {
+    const IconComponent = node.icon ? (LucideIcons as Record<string, any>)[node.icon] : null;
+
     return (
       <div
         className={`nr-node nr-label ${node.class ?? ""}`}
@@ -650,9 +656,10 @@ export default function NodeRenderer({
         {selectDot}
         <label
           className="nr-form-element nr-label-text"
-          style={fontStyle}
+          style={{ ...fontStyle, display: "flex", alignItems: "center", gap: "0.5rem" }}
           onClick={(e) => e.stopPropagation()}
         >
+          {IconComponent && <IconComponent size={fontStyle.fontSize || 16} />}
           <DynamicText
             content={node.content ?? node.name}
             allNodes={allNodes}
