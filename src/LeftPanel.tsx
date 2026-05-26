@@ -1,6 +1,9 @@
 import type { Node, NodeType } from "./types";
 import { DEFAULT_CUSTOM_CODE } from "./CustomNodeRunner";
 import { getScriptExample, RELEVANT_EVENTS } from "./scriptExamples";
+import * as LucideIcons from "lucide-react";
+
+const LUCIDE_ICON_NAMES = Object.keys(LucideIcons).filter(key => key[0] === key[0].toUpperCase() && key !== "createLucideIcon" && key !== "default" && typeof (LucideIcons as Record<string, unknown>)[key] !== "string");
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -243,6 +246,25 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
                   value={selected.content ?? ""}
                   onChange={(e) => onUpdate(selected.key, { content: e.target.value })}
                 />
+              </Field>
+            )}
+
+            {(selected.is === "button" || selected.is === "label") && (
+              <Field label="Icon (Lucide)">
+                <>
+                  <input
+                    className="lp-input"
+                    list="lucide-icons"
+                    value={selected.icon ?? ""}
+                    placeholder="e.g. Activity"
+                    onChange={(e) => onUpdate(selected.key, { icon: e.target.value || undefined })}
+                  />
+                  <datalist id="lucide-icons">
+                    {LUCIDE_ICON_NAMES.map((name) => (
+                      <option key={name} value={name} />
+                    ))}
+                  </datalist>
+                </>
               </Field>
             )}
 

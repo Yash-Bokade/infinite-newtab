@@ -20,7 +20,7 @@ Ideas and planned features to enhance the Home Canvas experience.
 - [x] **Local Storage Node**: A node to store and retrieve persistent variables that aren't tied to a specific UI element.
 
 ## 🎨 Design & Customization
-- [ ] **Icon Picker**: Integrated icon library (e.g., Lucide or FontAwesome) for buttons and labels.
+- [x] **Icon Picker**: Integrated icon library (e.g., Lucide or FontAwesome) for buttons and labels.
 - [ ] **Themes**: Ability to save and switch between global color schemes (Glassmorphism, Cyberpunk, Minimalist, etc.).
 - [ ] **Canvas Zooming**: Support for zooming in/out (pinch-to-zoom or wheel) to manage very large canvases.
 - [ ] **Alignment Guides**: Snapping and visual guides to help align nodes perfectly.
