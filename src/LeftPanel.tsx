@@ -236,14 +236,22 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
 
             {/* Type-specific fields */}
             {(selected.is === "text" || selected.is === "button" || selected.is === "label") && (
-              <Field label="Content">
-                <textarea
-                  className="lp-input"
-                  style={{ minHeight: 56, resize: "vertical", fontFamily: "inherit" }}
-                  value={selected.content ?? ""}
-                  onChange={(e) => onUpdate(selected.key, { content: e.target.value })}
-                />
-              </Field>
+              <>
+                <Field label="Content">
+                  <textarea
+                    className="lp-input"
+                    style={{ minHeight: 56, resize: "vertical", fontFamily: "inherit" }}
+                    value={selected.content ?? ""}
+                    onChange={(e) => onUpdate(selected.key, { content: e.target.value })}
+                  />
+                </Field>
+                <Field label="Icon (Lucide)">
+                  <Input
+                    value={selected.icon ?? ""}
+                    onChange={(v) => onUpdate(selected.key, { icon: v })}
+                  />
+                </Field>
+              </>
             )}
 
             {(selected.is === "progress" || selected.is === "input") && (
