@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import type { Node, FontProps } from "./types";
 
+import { icons } from "lucide-react";
 import CustomNodeRunner from "./CustomNodeRunner";
 import FetchNodeRunner from "./FetchNodeRunner";
 import DynamicText, { evaluateTemplate } from "./DynamicText";
@@ -395,6 +396,9 @@ export default function NodeRenderer({
 
   // ── Render by type ────────────────────────────────────────────────────────
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const IconComponent = node.icon && (icons as any)[node.icon] ? (icons as any)[node.icon] : null;
+
   if (node.is === "container") {
     return (
       <div
@@ -436,9 +440,13 @@ export default function NodeRenderer({
             fontFamily: "inherit",
             padding: 0,
             overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
             ...fontStyle,
           }}
         >
+          {IconComponent && <IconComponent size="1em" />}
           <DynamicText
             content={node.content ?? node.name}
             allNodes={allNodes}
@@ -529,7 +537,7 @@ export default function NodeRenderer({
         {selectDot}
         <button
           className="nr-btn-inner"
-          style={fontStyle}
+          style={{ ...fontStyle, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
           onClick={(e) => {
             if (canEdit) return;
             e.stopPropagation();
@@ -540,6 +548,7 @@ export default function NodeRenderer({
             runScript(node.onClick, e);
           }}
         >
+          {IconComponent && <IconComponent size="1em" />}
           {node.content ?? node.name}
         </button>
         {childNodes}
@@ -650,9 +659,10 @@ export default function NodeRenderer({
         {selectDot}
         <label
           className="nr-form-element nr-label-text"
-          style={fontStyle}
+          style={{ ...fontStyle, display: "flex", alignItems: "center", gap: "0.5rem" }}
           onClick={(e) => e.stopPropagation()}
         >
+          {IconComponent && <IconComponent size="1em" />}
           <DynamicText
             content={node.content ?? node.name}
             allNodes={allNodes}

@@ -47,6 +47,7 @@ export type Node = {
   resize?: boolean;           // whether resize handle is shown
   children?: Node[];
   font?: FontProps;           // typography properties
+  icon?: string;              // icon name (e.g., from lucide-react)
 
   // Scripting / Events
   onClick?: string;
