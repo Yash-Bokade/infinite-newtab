@@ -21,6 +21,60 @@
     font: 18px/145% var(--sans);
     letter-spacing: 0.18px;
     color-scheme: light dark;
+  }
+
+  [data-theme="dark"] {
+    --text: #a1a1aa;
+    --text-h: #f4f4f5;
+    --bg: #09090b;
+    --border: #27272a;
+    --code-bg: #18181b;
+    --accent: #a855f7;
+    --accent-bg: rgba(168, 85, 247, 0.1);
+    --accent-border: rgba(168, 85, 247, 0.5);
+    --social-bg: rgba(24, 24, 27, 0.5);
+    color-scheme: dark;
+  }
+
+  [data-theme="cyberpunk"] {
+    --text: #00ff00;
+    --text-h: #ff00ff;
+    --bg: #000000;
+    --border: #00ff00;
+    --code-bg: #111111;
+    --accent: #00ffff;
+    --accent-bg: rgba(0, 255, 255, 0.1);
+    --accent-border: rgba(0, 255, 255, 0.5);
+    --social-bg: rgba(17, 17, 17, 0.5);
+    color-scheme: dark;
+    --sans: "Courier New", Courier, monospace;
+    --heading: "Courier New", Courier, monospace;
+  }
+
+  [data-theme="minimalist"] {
+    --text: #666666;
+    --text-h: #111111;
+    --bg: #ffffff;
+    --border: #f0f0f0;
+    --code-bg: #f9f9f9;
+    --accent: #000000;
+    --accent-bg: rgba(0, 0, 0, 0.05);
+    --accent-border: rgba(0, 0, 0, 0.2);
+    --social-bg: rgba(249, 249, 249, 0.5);
+    color-scheme: light;
+  }
+
+  [data-theme="glassmorphism"] {
+    --text: #ffffff;
+    --text-h: #ffffff;
+    --bg: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    --border: rgba(255, 255, 255, 0.3);
+    --code-bg: rgba(255, 255, 255, 0.1);
+    --accent: #ffffff;
+    --accent-bg: rgba(255, 255, 255, 0.2);
+    --accent-border: rgba(255, 255, 255, 0.5);
+    --social-bg: rgba(255, 255, 255, 0.1);
+    color-scheme: light;
     color: var(--text);
     background: var(--bg);
     font-synthesis: none;
@@ -255,6 +309,12 @@
     gap: 0;
     overflow: hidden;
     user-select: none;
+  }
+
+  [data-theme="glassmorphism"] .lp-root {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
   .lp-section {
     padding: 12px;
@@ -511,6 +571,12 @@
     padding: 8px;
     background: var(--code-bg);
     overflow: visible;
+  }
+  [data-theme="glassmorphism"] .nr-node.container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
   .nr-container-label {
     font-size: 10px;

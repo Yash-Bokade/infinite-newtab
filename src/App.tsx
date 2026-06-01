@@ -16,8 +16,16 @@ export default function App() {
     title: string;
   } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, nodeKey: string } | null>(null);
+  const [theme, setTheme] = useState<string>(() => {
+    return localStorage.getItem("home-canvas-theme") || "default";
+  });
 
   const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("home-canvas-theme", theme);
+  }, [theme]);
 
   // ── Canvas pan ────────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -161,6 +169,8 @@ export default function App() {
           onEditScript={(key, field, title) =>
             setEditingScript({ key, field, title })
           }
+            theme={theme}
+            onThemeChange={setTheme}
         />
       )}
 
