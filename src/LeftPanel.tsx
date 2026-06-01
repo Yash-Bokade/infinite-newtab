@@ -102,9 +102,11 @@ interface LeftPanelProps extends Props {
   onBringToFront: (key: string) => void;
   onSendToBack: (key: string) => void;
   onEditScript?: (key: string, field: keyof Node, title: string) => void;
+  theme: string;
+  onThemeChange: (v: string) => void;
 }
 
-export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onDuplicate, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript }: LeftPanelProps) {
+export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onDuplicate, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript, theme, onThemeChange }: LeftPanelProps) {
   const nodeTypes: NodeType[] = ["container", "text", "image", "link", "button", "custom", "progress", "radio", "checkbox", "input", "label", "fetch", "storage"];
   const selected = selectedNodes.length === 1 ? selectedNodes[0] : null;
 
@@ -128,9 +130,21 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
               <button className="lp-icon-btn" title="Deselect All" onClick={onDeselect}>✕</button>
             </>
           ) : (
-            <span className="lp-section-title lp-muted">No node selected</span>
+            <span className="lp-section-title lp-muted">Canvas Settings</span>
           )}
         </div>
+
+        {selectedNodes.length === 0 && (
+          <div className="lp-fields">
+            <Field label="Theme">
+              <Select
+                value={theme}
+                options={["default", "dark", "cyberpunk", "minimalist", "glassmorphism"]}
+                onChange={onThemeChange}
+              />
+            </Field>
+          </div>
+        )}
 
         {selectedNodes.length > 1 && (
           <div className="lp-fields">
