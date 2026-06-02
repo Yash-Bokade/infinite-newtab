@@ -1,6 +1,7 @@
 import type { Node, NodeType } from "./types";
 import { DEFAULT_CUSTOM_CODE } from "./CustomNodeRunner";
 import { getScriptExample, RELEVANT_EVENTS } from "./scriptExamples";
+import { IconPicker } from "./IconPicker";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -259,8 +260,8 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
                     onChange={(e) => onUpdate(selected.key, { content: e.target.value })}
                   />
                 </Field>
-                <Field label="Icon (Lucide)">
-                  <Input
+                <Field label="Icon">
+                  <IconPicker
                     value={selected.icon ?? ""}
                     onChange={(v) => onUpdate(selected.key, { icon: v })}
                   />
