@@ -18,6 +18,7 @@ interface Props {
   /** True when this is a top-level node (positioned absolutely on canvas) */
   isRoot?: boolean;
   allNodes: Node[];
+  zoom?: number;
 }
 
 export default function NodeRenderer({
@@ -31,6 +32,7 @@ export default function NodeRenderer({
   mode = "edit",
   isRoot = false,
   allNodes,
+  zoom = 1,
 }: Props) {
   const canEdit = mode === "edit";
   const isSelected = selectedKeys.includes(node.key);
@@ -102,8 +104,8 @@ export default function NodeRenderer({
 
   function handleDragMove(e: MouseEvent) {
     if (!dragState.current) return;
-    const dx = e.clientX - dragState.current.startMouseX;
-    const dy = e.clientY - dragState.current.startMouseY;
+    const dx = (e.clientX - dragState.current.startMouseX) / zoom;
+    const dy = (e.clientY - dragState.current.startMouseY) / zoom;
 
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
       wasDragged.current = true;
@@ -197,8 +199,8 @@ export default function NodeRenderer({
 
   function handleResizeMove(e: MouseEvent) {
     if (!resizeState.current) return;
-    const dw = e.clientX - resizeState.current.startMouseX;
-    const dh = e.clientY - resizeState.current.startMouseY;
+    const dw = (e.clientX - resizeState.current.startMouseX) / zoom;
+    const dh = (e.clientY - resizeState.current.startMouseY) / zoom;
     onUpdate(node.key, {
       size: [
         Math.max(40, resizeState.current.startW + dw),
@@ -376,6 +378,7 @@ export default function NodeRenderer({
       mode={mode}
       isRoot={false}
       allNodes={allNodes}
+      zoom={zoom}
     />
   ));
 

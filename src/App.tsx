@@ -27,13 +27,64 @@ export default function App() {
     localStorage.setItem("home-canvas-theme", theme);
   }, [theme]);
 
-  // ── Canvas pan ────────────────────────────────────────────────────────────
+  // ── Canvas pan & zoom ──────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const hasDragged = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
   const offset = useRef({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    const canvasEl = canvasRef.current;
+    if (!canvasEl) return;
+
+    function handleWheel(e: WheelEvent) {
+      // Don't zoom if we are inside a node and not holding ctrl
+      // E.g., scrolling a textarea or a list
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+      if (isInput && !e.ctrlKey) return;
+
+      e.preventDefault();
+
+      setZoom((prevZoom) => {
+        const zoomFactor = 1.05;
+        const direction = e.deltaY > 0 ? -1 : 1;
+        let newZoom = direction > 0 ? prevZoom * zoomFactor : prevZoom / zoomFactor;
+
+        // Clamp zoom
+        if (newZoom < 0.1) newZoom = 0.1;
+        if (newZoom > 10) newZoom = 10;
+        if (newZoom === prevZoom) return prevZoom;
+
+        const rect = canvasEl!.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Calculate how much the mouse position in "world coordinates" has changed due to scale
+        const worldX = (mouseX - offset.current.x) / prevZoom;
+        const worldY = (mouseY - offset.current.y) / prevZoom;
+
+        const newOffsetX = mouseX - worldX * newZoom;
+        const newOffsetY = mouseY - worldY * newZoom;
+
+        offset.current.x = newOffsetX;
+        offset.current.y = newOffsetY;
+
+        // Update styles
+        canvasEl!.style.backgroundPosition = `${offset.current.x}px ${offset.current.y}px`;
+        canvasEl!.style.backgroundSize = `${30 * newZoom}px ${30 * newZoom}px`;
+        worldRef.current!.style.transform = `translate(${offset.current.x}px, ${offset.current.y}px) scale(${newZoom})`;
+
+        return newZoom;
+      });
+    }
+
+    canvasEl.addEventListener("wheel", handleWheel, { passive: false });
+    return () => canvasEl.removeEventListener("wheel", handleWheel);
+  }, []);
 
   function handleCanvasMouseDown(e: React.MouseEvent) {
     setContextMenu(null);
@@ -57,7 +108,7 @@ export default function App() {
     offset.current.y += dy;
     lastPos.current = { x: e.clientX, y: e.clientY };
     canvasRef.current!.style.backgroundPosition = `${offset.current.x}px ${offset.current.y}px`;
-    worldRef.current!.style.transform = `translate(${offset.current.x}px, ${offset.current.y}px)`;
+    worldRef.current!.style.transform = `translate(${offset.current.x}px, ${offset.current.y}px) scale(${zoom})`;
   }
 
   function stopDragging() {
@@ -121,11 +172,11 @@ export default function App() {
       if (!d || typeof d.type !== "string") return;
 
       if (d.type === "hc:storage:set") {
-        try { localStorage.setItem(d.key, JSON.stringify(d.value)); } catch {}
+        try { localStorage.setItem(d.key, JSON.stringify(d.value)); } catch (err) { console.error(err); }
 
       } else if (d.type === "hc:storage:get") {
         let value = null;
-        try { const raw = localStorage.getItem(d.key); value = raw !== null ? JSON.parse(raw) : null; } catch {}
+        try { const raw = localStorage.getItem(d.key); value = raw !== null ? JSON.parse(raw) : null; } catch (err) { console.error(err); }
         (e.source as Window)?.postMessage({ type: "hc:storage:result", id: d.id, value }, "*");
 
       } else if (d.type === "hc:open") {
@@ -210,6 +261,7 @@ export default function App() {
               mode={mode}
               isRoot
               allNodes={nodes}
+              zoom={zoom}
             />
           ))}
         </div>

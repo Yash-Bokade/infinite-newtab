@@ -22,7 +22,7 @@ Ideas and planned features to enhance the Home Canvas experience.
 ## 🎨 Design & Customization
 - [x] **Icon Picker**: Integrated icon library (e.g., Lucide or FontAwesome) for buttons and labels.
 - [x] **Themes**: Ability to save and switch between global color schemes (Glassmorphism, Cyberpunk, Minimalist, etc.).
-- [ ] **Canvas Zooming**: Support for zooming in/out (pinch-to-zoom or wheel) to manage very large canvases.
+- [x] **Canvas Zooming**: Support for zooming in/out (pinch-to-zoom or wheel) to manage very large canvases.
 - [ ] **Alignment Guides**: Snapping and visual guides to help align nodes perfectly.
 
 ## 💻 Developer Experience
