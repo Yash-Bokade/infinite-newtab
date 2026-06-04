@@ -21,6 +21,123 @@ interface Props {
   zoom?: number;
 }
 
+
+// ── Snapping Helpers ────────────────────────────────────────────────────────
+
+const SNAP_THRESHOLD = 5;
+
+interface SnapGuide {
+  axis: "x" | "y";
+  pos: number;
+}
+
+function getAbsoluteOffset(targetKey: string, all: Node[]): { x: number, y: number } {
+  let x = 0;
+  let y = 0;
+  let currKey = targetKey;
+
+  function findParent(nodes: Node[], childKey: string): Node | null {
+    for (const n of nodes) {
+      if (n.children?.some(c => c.key === childKey)) return n;
+      if (n.children) {
+        const p = findParent(n.children, childKey);
+        if (p) return p;
+      }
+    }
+    return null;
+  }
+
+  function findNode(nodes: Node[], key: string): Node | null {
+    for (const n of nodes) {
+      if (n.key === key) return n;
+      if (n.children) {
+        const f = findNode(n.children, key);
+        if (f) return f;
+      }
+    }
+    return null;
+  }
+
+  while (currKey) {
+    const node = findNode(all, currKey);
+    if (!node) break;
+    x += node.position[0];
+    y += node.position[1];
+    const parent = findParent(all, currKey);
+    if (!parent) break;
+    currKey = parent.key;
+  }
+  return { x, y };
+}
+
+function findSiblings(nodeKey: string, all: Node[]): Node[] {
+  function findParent(nodes: Node[], childKey: string): Node | null {
+    for (const n of nodes) {
+      if (n.children?.some(c => c.key === childKey)) return n;
+      if (n.children) {
+        const p = findParent(n.children, childKey);
+        if (p) return p;
+      }
+    }
+    return null;
+  }
+
+  const parent = findParent(all, nodeKey);
+  if (parent) {
+    return parent.children?.filter(c => c.key !== nodeKey) || [];
+  } else {
+    // Root nodes
+    return all.filter(c => c.key !== nodeKey);
+  }
+}
+
+function findSnaps(
+  val: number,
+  size: number,
+  siblings: Node[],
+  all: Node[],
+  axis: "x" | "y"
+): { snappedVal: number | null, guides: SnapGuide[] } {
+  const edges = [val, val + size / 2, val + size];
+  let minDiff = Infinity;
+  let bestSnap: number | null = null;
+  let activeGuides: SnapGuide[] = [];
+
+  for (const sib of siblings) {
+    const sibOffset = getAbsoluteOffset(sib.key, all);
+    // Since siblings are in the same coordinate space as the node,
+    // we can just use their position directly for snapping.
+    const sibPos = axis === "x" ? sib.position[0] : sib.position[1];
+    const sibSize = axis === "x" ? sib.size[0] : sib.size[1];
+
+    const sibEdges = [sibPos, sibPos + sibSize / 2, sibPos + sibSize];
+
+    for (const myEdge of edges) {
+      for (const theirEdge of sibEdges) {
+        const diff = Math.abs(myEdge - theirEdge);
+        if (diff < SNAP_THRESHOLD && diff < minDiff) {
+          minDiff = diff;
+          bestSnap = val + (theirEdge - myEdge);
+
+          // Guide position should be absolute
+          const absPos = axis === "x" ? sibOffset.x + (theirEdge - sibPos) : sibOffset.y + (theirEdge - sibPos);
+          activeGuides = [{ axis, pos: absPos }];
+        } else if (diff === minDiff && diff < SNAP_THRESHOLD) {
+           const absPos = axis === "x" ? sibOffset.x + (theirEdge - sibPos) : sibOffset.y + (theirEdge - sibPos);
+           activeGuides.push({ axis, pos: absPos });
+        }
+      }
+    }
+  }
+
+  return { snappedVal: bestSnap, guides: activeGuides };
+}
+
+// Dispatch event for guides
+function dispatchGuides(guides: SnapGuide[]) {
+  window.dispatchEvent(new CustomEvent("hc:guides", { detail: guides }));
+}
+
 export default function NodeRenderer({
   node,
   selectedKeys,
@@ -104,12 +221,33 @@ export default function NodeRenderer({
 
   function handleDragMove(e: MouseEvent) {
     if (!dragState.current) return;
-    const dx = (e.clientX - dragState.current.startMouseX) / zoom;
-    const dy = (e.clientY - dragState.current.startMouseY) / zoom;
+    let dx = (e.clientX - dragState.current.startMouseX) / zoom;
+    let dy = (e.clientY - dragState.current.startMouseY) / zoom;
 
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
       wasDragged.current = true;
     }
+
+    let allGuides: SnapGuide[] = [];
+
+    // Only snap if single node is dragged and Alt is not pressed
+    if (dragState.current.startPositions.length === 1 && !e.altKey) {
+      const p = dragState.current.startPositions[0];
+      const siblings = findSiblings(node.key, allNodes);
+
+      const newX = p.x + dx;
+      const newY = p.y + dy;
+
+      const snapX = findSnaps(newX, node.size[0], siblings, allNodes, "x");
+      const snapY = findSnaps(newY, node.size[1], siblings, allNodes, "y");
+
+      if (snapX.snappedVal !== null) dx = snapX.snappedVal - p.x;
+      if (snapY.snappedVal !== null) dy = snapY.snappedVal - p.y;
+
+      allGuides = [...snapX.guides, ...snapY.guides];
+    }
+
+    dispatchGuides(allGuides);
 
     if (onUpdateMultiple) {
       const updates = dragState.current.startPositions.map(pos => ({
@@ -130,6 +268,7 @@ export default function NodeRenderer({
   function handleDragEnd(e: MouseEvent) {
     if (!dragState.current) return;
 
+    dispatchGuides([]);
     dragState.current = null;
     window.removeEventListener("mousemove", handleDragMove);
     window.removeEventListener("mouseup", handleDragEnd as EventListener);
@@ -201,15 +340,74 @@ export default function NodeRenderer({
     if (!resizeState.current) return;
     const dw = (e.clientX - resizeState.current.startMouseX) / zoom;
     const dh = (e.clientY - resizeState.current.startMouseY) / zoom;
+
+    let w = Math.max(40, resizeState.current.startW + dw);
+    let h = Math.max(20, resizeState.current.startH + dh);
+
+    let allGuides: SnapGuide[] = [];
+
+    if (!e.altKey) {
+        const siblings = findSiblings(node.key, allNodes);
+
+        // We only snap the right and bottom edges during resize
+        const edgesX = [node.position[0] + w];
+        const edgesY = [node.position[1] + h];
+
+        let minDiffX = Infinity;
+        let minDiffY = Infinity;
+        let snapX: number | null = null;
+        let snapY: number | null = null;
+
+        for (const sib of siblings) {
+            const sibOffset = getAbsoluteOffset(sib.key, allNodes);
+            const sibPos = [sib.position[0], sib.position[1]];
+            const sibSize = [sib.size[0], sib.size[1]];
+
+            const sibEdgesX = [sibPos[0], sibPos[0] + sibSize[0] / 2, sibPos[0] + sibSize[0]];
+            const sibEdgesY = [sibPos[1], sibPos[1] + sibSize[1] / 2, sibPos[1] + sibSize[1]];
+
+            for (const theirEdgeX of sibEdgesX) {
+                const diff = Math.abs(edgesX[0] - theirEdgeX);
+                if (diff < SNAP_THRESHOLD && diff < minDiffX) {
+                    minDiffX = diff;
+                    snapX = theirEdgeX - node.position[0];
+                    const absPos = sibOffset.x + (theirEdgeX - sibPos[0]);
+                    allGuides = allGuides.filter(g => g.axis !== "x");
+                    allGuides.push({ axis: "x", pos: absPos });
+                } else if (diff === minDiffX && diff < SNAP_THRESHOLD) {
+                    const absPos = sibOffset.x + (theirEdgeX - sibPos[0]);
+                    allGuides.push({ axis: "x", pos: absPos });
+                }
+            }
+
+            for (const theirEdgeY of sibEdgesY) {
+                const diff = Math.abs(edgesY[0] - theirEdgeY);
+                if (diff < SNAP_THRESHOLD && diff < minDiffY) {
+                    minDiffY = diff;
+                    snapY = theirEdgeY - node.position[1];
+                    const absPos = sibOffset.y + (theirEdgeY - sibPos[1]);
+                    allGuides = allGuides.filter(g => g.axis !== "y");
+                    allGuides.push({ axis: "y", pos: absPos });
+                } else if (diff === minDiffY && diff < SNAP_THRESHOLD) {
+                    const absPos = sibOffset.y + (theirEdgeY - sibPos[1]);
+                    allGuides.push({ axis: "y", pos: absPos });
+                }
+            }
+        }
+
+        if (snapX !== null) w = Math.max(40, snapX);
+        if (snapY !== null) h = Math.max(20, snapY);
+    }
+
+    dispatchGuides(allGuides);
+
     onUpdate(node.key, {
-      size: [
-        Math.max(40, resizeState.current.startW + dw),
-        Math.max(20, resizeState.current.startH + dh),
-      ],
+      size: [w, h],
     });
   }
 
   function handleResizeEnd() {
+    dispatchGuides([]);
     resizeState.current = null;
     window.removeEventListener("mousemove", handleResizeMove);
     window.removeEventListener("mouseup", handleResizeEnd);
