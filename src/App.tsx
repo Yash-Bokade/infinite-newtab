@@ -19,6 +19,16 @@ export default function App() {
   const [theme, setTheme] = useState<string>(() => {
     return localStorage.getItem("home-canvas-theme") || "default";
   });
+  const [guides, setGuides] = useState<{ axis: "x" | "y", pos: number }[]>([]);
+
+  useEffect(() => {
+    function handleGuides(e: Event) {
+      const customEvent = e as CustomEvent;
+      setGuides(customEvent.detail);
+    }
+    window.addEventListener("hc:guides", handleGuides);
+    return () => window.removeEventListener("hc:guides", handleGuides);
+  }, []);
 
   const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
 
@@ -248,6 +258,21 @@ export default function App() {
 
         {/* World — pans with offset */}
         <div ref={worldRef} className="world">
+          {guides.map((g, i) => (
+            <div
+              key={`guide-${i}`}
+              style={{
+                position: "absolute",
+                background: "var(--accent, #3b82f6)",
+                opacity: 0.5,
+                zIndex: 9999,
+                pointerEvents: "none",
+                ...(g.axis === "x"
+                  ? { left: g.pos, top: -10000, width: 1, height: 20000 }
+                  : { top: g.pos, left: -10000, width: 20000, height: 1 }),
+              }}
+            />
+          ))}
           {nodes.map((node) => (
             <NodeRenderer
               key={node.key}
