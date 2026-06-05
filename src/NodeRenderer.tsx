@@ -19,6 +19,8 @@ interface Props {
   isRoot?: boolean;
   allNodes: Node[];
   zoom?: number;
+  parentAbsolutePosition?: [number, number];
+  onShowGuides?: (guides: {type: 'x'|'y', pos: number}[]) => void;
 }
 
 export default function NodeRenderer({
@@ -33,15 +35,24 @@ export default function NodeRenderer({
   isRoot = false,
   allNodes,
   zoom = 1,
+  parentAbsolutePosition = [0, 0],
+  onShowGuides,
 }: Props) {
   const canEdit = mode === "edit";
   const isSelected = selectedKeys.includes(node.key);
+
+  const absolutePosition: [number, number] = [
+    parentAbsolutePosition[0] + node.position[0],
+    parentAbsolutePosition[1] + node.position[1],
+  ];
 
   // ── Drag to move (only root nodes, in edit mode) ──────────────────────────
   const dragState = useRef<{
     startMouseX: number;
     startMouseY: number;
     startPositions: { key: string, x: number, y: number }[];
+    snapTargetsX: number[];
+    snapTargetsY: number[];
   } | null>(null);
 
   const wasDragged = useRef(false);
@@ -80,23 +91,40 @@ export default function NodeRenderer({
 
     // Find start positions for all actively selected nodes
     const startPositions: { key: string, x: number, y: number }[] = [];
+    const snapTargetsX = new Set<number>();
+    const snapTargetsY = new Set<number>();
 
-    function findStarts(list: Node[]) {
+    function findStartsAndTargets(list: Node[], currentParentAbsolute: [number, number] = [0, 0]) {
       for (const n of list) {
+        const nAbsoluteX = currentParentAbsolute[0] + n.position[0];
+        const nAbsoluteY = currentParentAbsolute[1] + n.position[1];
+
         if (activeSelection.includes(n.key)) {
           startPositions.push({ key: n.key, x: n.position[0], y: n.position[1] });
+        } else {
+          // Edges and center for unselected node
+          snapTargetsX.add(nAbsoluteX);
+          snapTargetsX.add(nAbsoluteX + n.size[0] / 2);
+          snapTargetsX.add(nAbsoluteX + n.size[0]);
+
+          snapTargetsY.add(nAbsoluteY);
+          snapTargetsY.add(nAbsoluteY + n.size[1] / 2);
+          snapTargetsY.add(nAbsoluteY + n.size[1]);
         }
+
         if (n.children) {
-          findStarts(n.children);
+          findStartsAndTargets(n.children, [nAbsoluteX, nAbsoluteY]);
         }
       }
     }
-    findStarts(allNodes);
+    findStartsAndTargets(allNodes);
 
     dragState.current = {
       startMouseX: e.clientX,
       startMouseY: e.clientY,
       startPositions,
+      snapTargetsX: Array.from(snapTargetsX),
+      snapTargetsY: Array.from(snapTargetsY),
     };
     window.addEventListener("mousemove", handleDragMove);
     window.addEventListener("mouseup", handleDragEnd as EventListener);
@@ -104,12 +132,78 @@ export default function NodeRenderer({
 
   function handleDragMove(e: MouseEvent) {
     if (!dragState.current) return;
-    const dx = (e.clientX - dragState.current.startMouseX) / zoom;
-    const dy = (e.clientY - dragState.current.startMouseY) / zoom;
+    let dx = (e.clientX - dragState.current.startMouseX) / zoom;
+    let dy = (e.clientY - dragState.current.startMouseY) / zoom;
 
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
       wasDragged.current = true;
     }
+
+    const snapThreshold = 5 / zoom;
+    const activeGuides: {type: 'x'|'y', pos: number}[] = [];
+
+    // Snapping logic only applies relative to the primary node being dragged
+    const primaryStart = dragState.current.startPositions.find(p => p.key === node.key);
+    if (primaryStart) {
+      const rawX = primaryStart.x + dx;
+      const rawY = primaryStart.y + dy;
+
+      const absoluteRawX = parentAbsolutePosition[0] + rawX;
+      const absoluteRawY = parentAbsolutePosition[1] + rawY;
+
+      // Find closest X snap
+      let bestXDiff = snapThreshold;
+      let snapX = null;
+      for (const target of dragState.current.snapTargetsX) {
+        // Check left edge
+        if (Math.abs(absoluteRawX - target) < bestXDiff) {
+          bestXDiff = Math.abs(absoluteRawX - target);
+          snapX = target;
+          dx = (target - parentAbsolutePosition[0]) - primaryStart.x;
+        }
+        // Check center
+        else if (Math.abs((absoluteRawX + node.size[0] / 2) - target) < bestXDiff) {
+          bestXDiff = Math.abs((absoluteRawX + node.size[0] / 2) - target);
+          snapX = target;
+          dx = (target - node.size[0] / 2 - parentAbsolutePosition[0]) - primaryStart.x;
+        }
+        // Check right edge
+        else if (Math.abs((absoluteRawX + node.size[0]) - target) < bestXDiff) {
+          bestXDiff = Math.abs((absoluteRawX + node.size[0]) - target);
+          snapX = target;
+          dx = (target - node.size[0] - parentAbsolutePosition[0]) - primaryStart.x;
+        }
+      }
+
+      // Find closest Y snap
+      let bestYDiff = snapThreshold;
+      let snapY = null;
+      for (const target of dragState.current.snapTargetsY) {
+        // Check top edge
+        if (Math.abs(absoluteRawY - target) < bestYDiff) {
+          bestYDiff = Math.abs(absoluteRawY - target);
+          snapY = target;
+          dy = (target - parentAbsolutePosition[1]) - primaryStart.y;
+        }
+        // Check center
+        else if (Math.abs((absoluteRawY + node.size[1] / 2) - target) < bestYDiff) {
+          bestYDiff = Math.abs((absoluteRawY + node.size[1] / 2) - target);
+          snapY = target;
+          dy = (target - node.size[1] / 2 - parentAbsolutePosition[1]) - primaryStart.y;
+        }
+        // Check bottom edge
+        else if (Math.abs((absoluteRawY + node.size[1]) - target) < bestYDiff) {
+          bestYDiff = Math.abs((absoluteRawY + node.size[1]) - target);
+          snapY = target;
+          dy = (target - node.size[1] - parentAbsolutePosition[1]) - primaryStart.y;
+        }
+      }
+
+      if (snapX !== null) activeGuides.push({ type: 'x', pos: snapX });
+      if (snapY !== null) activeGuides.push({ type: 'y', pos: snapY });
+    }
+
+    if (onShowGuides) onShowGuides(activeGuides);
 
     if (onUpdateMultiple) {
       const updates = dragState.current.startPositions.map(pos => ({
@@ -129,6 +223,8 @@ export default function NodeRenderer({
 
   function handleDragEnd(e: MouseEvent) {
     if (!dragState.current) return;
+
+    if (onShowGuides) onShowGuides([]);
 
     dragState.current = null;
     window.removeEventListener("mousemove", handleDragMove);
@@ -181,17 +277,46 @@ export default function NodeRenderer({
     startMouseY: number;
     startW: number;
     startH: number;
+    snapTargetsX: number[];
+    snapTargetsY: number[];
   } | null>(null);
 
   function handleResizeStart(e: React.MouseEvent) {
     if (!canEdit) return;
     e.stopPropagation();
     e.preventDefault();
+
+    const snapTargetsX = new Set<number>();
+    const snapTargetsY = new Set<number>();
+    function findTargets(list: Node[], currentParentAbsolute: [number, number] = [0, 0]) {
+      for (const n of list) {
+        const nAbsoluteX = currentParentAbsolute[0] + n.position[0];
+        const nAbsoluteY = currentParentAbsolute[1] + n.position[1];
+
+        if (n.key !== node.key && !selectedKeys.includes(n.key)) {
+          snapTargetsX.add(nAbsoluteX);
+          snapTargetsX.add(nAbsoluteX + n.size[0] / 2);
+          snapTargetsX.add(nAbsoluteX + n.size[0]);
+
+          snapTargetsY.add(nAbsoluteY);
+          snapTargetsY.add(nAbsoluteY + n.size[1] / 2);
+          snapTargetsY.add(nAbsoluteY + n.size[1]);
+        }
+
+        if (n.children) {
+          findTargets(n.children, [nAbsoluteX, nAbsoluteY]);
+        }
+      }
+    }
+    findTargets(allNodes);
+
     resizeState.current = {
       startMouseX: e.clientX,
       startMouseY: e.clientY,
       startW: node.size[0],
       startH: node.size[1],
+      snapTargetsX: Array.from(snapTargetsX),
+      snapTargetsY: Array.from(snapTargetsY),
     };
     window.addEventListener("mousemove", handleResizeMove);
     window.addEventListener("mouseup", handleResizeEnd);
@@ -201,15 +326,61 @@ export default function NodeRenderer({
     if (!resizeState.current) return;
     const dw = (e.clientX - resizeState.current.startMouseX) / zoom;
     const dh = (e.clientY - resizeState.current.startMouseY) / zoom;
+
+    const snapThreshold = 5 / zoom;
+    const activeGuides: {type: 'x'|'y', pos: number}[] = [];
+
+    const absoluteX = absolutePosition[0];
+    const absoluteY = absolutePosition[1];
+    const rawW = Math.max(40, resizeState.current.startW + dw);
+    const rawH = Math.max(20, resizeState.current.startH + dh);
+
+    // X Snapping (Right edge and center)
+    let bestXDiff = snapThreshold;
+    let snapX = null;
+    let finalW = rawW;
+    for (const target of resizeState.current.snapTargetsX) {
+      if (Math.abs((absoluteX + rawW) - target) < bestXDiff) {
+        bestXDiff = Math.abs((absoluteX + rawW) - target);
+        snapX = target;
+        finalW = target - absoluteX;
+      } else if (Math.abs((absoluteX + rawW / 2) - target) < bestXDiff) {
+        bestXDiff = Math.abs((absoluteX + rawW / 2) - target);
+        snapX = target;
+        finalW = (target - absoluteX) * 2;
+      }
+    }
+
+    // Y Snapping (Bottom edge and center)
+    let bestYDiff = snapThreshold;
+    let snapY = null;
+    let finalH = rawH;
+    for (const target of resizeState.current.snapTargetsY) {
+      if (Math.abs((absoluteY + rawH) - target) < bestYDiff) {
+        bestYDiff = Math.abs((absoluteY + rawH) - target);
+        snapY = target;
+        finalH = target - absoluteY;
+      } else if (Math.abs((absoluteY + rawH / 2) - target) < bestYDiff) {
+        bestYDiff = Math.abs((absoluteY + rawH / 2) - target);
+        snapY = target;
+        finalH = (target - absoluteY) * 2;
+      }
+    }
+
+    if (snapX !== null) activeGuides.push({ type: 'x', pos: snapX });
+    if (snapY !== null) activeGuides.push({ type: 'y', pos: snapY });
+    if (onShowGuides) onShowGuides(activeGuides);
+
     onUpdate(node.key, {
       size: [
-        Math.max(40, resizeState.current.startW + dw),
-        Math.max(20, resizeState.current.startH + dh),
+        Math.max(40, finalW),
+        Math.max(20, finalH),
       ],
     });
   }
 
   function handleResizeEnd() {
+    if (onShowGuides) onShowGuides([]);
     resizeState.current = null;
     window.removeEventListener("mousemove", handleResizeMove);
     window.removeEventListener("mouseup", handleResizeEnd);
@@ -379,6 +550,8 @@ export default function NodeRenderer({
       isRoot={false}
       allNodes={allNodes}
       zoom={zoom}
+      parentAbsolutePosition={absolutePosition}
+      onShowGuides={onShowGuides}
     />
   ));
 
