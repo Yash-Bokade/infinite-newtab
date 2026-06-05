@@ -19,6 +19,7 @@ export default function App() {
   const [theme, setTheme] = useState<string>(() => {
     return localStorage.getItem("home-canvas-theme") || "default";
   });
+  const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
 
   const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
 
@@ -262,8 +263,46 @@ export default function App() {
               isRoot
               allNodes={nodes}
               zoom={zoom}
+              onShowGuides={setGuides}
             />
           ))}
+
+          {/* Render Alignment Guides */}
+          {guides.map((guide, i) => {
+            if (guide.type === 'x') {
+              return (
+                <div
+                  key={i}
+                  style={{
+                    position: "absolute",
+                    left: guide.pos,
+                    top: -10000,
+                    width: 1 / zoom,
+                    height: 20000,
+                    background: "var(--accent)",
+                    zIndex: 99999,
+                    pointerEvents: "none",
+                  }}
+                />
+              );
+            } else {
+              return (
+                <div
+                  key={i}
+                  style={{
+                    position: "absolute",
+                    top: guide.pos,
+                    left: -10000,
+                    height: 1 / zoom,
+                    width: 20000,
+                    background: "var(--accent)",
+                    zIndex: 99999,
+                    pointerEvents: "none",
+                  }}
+                />
+              );
+            }
+          })}
         </div>
       </div>
 
