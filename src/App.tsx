@@ -5,6 +5,7 @@ import { useNodes } from "./useNodes";
 import LeftPanel from "./LeftPanel";
 import NodeRenderer from "./NodeRenderer";
 import { getScriptExample, RELEVANT_EVENTS } from "./scriptExamples";
+import Editor from "@monaco-editor/react";
 
 export default function App() {
   const [mode, setMode] = useState<Mode>("view");
@@ -385,7 +386,8 @@ export default function App() {
             | "onMouseEnter"
             | "onMouseLeave"
             | "onLoad"
-            | "onValueChange";
+            | "onValueChange"
+            | "code";
           const currentField = editingScript.field as EK;
           const nodeEvents = (RELEVANT_EVENTS[node.is] ?? []) as EK[];
           const currentExample = getScriptExample(node.is, currentField);
@@ -510,24 +512,19 @@ export default function App() {
                         ))}
                       </div>
                     )}
-                    <textarea
-                      className="app-modal-textarea"
-                      value={(node[currentField] as string) ?? ""}
-                      onChange={(e) =>
-                        updateNode(editingScript.key, {
-                          [currentField]: e.target.value,
-                        })
-                      }
-                      spellCheck={false}
-                      placeholder={
-                        currentExample
-                          ? `// Click 'Examples ►' to load example code for ${currentField}`
-                          : `// Write your ${currentField} script here
-// nodes.get('NodeName').setValue(value)
-// nodes.get('NodeName').getValue()
-// nodes.get('NodeName').update({ ... })`
-                      }
-                    />
+                    <div style={{ flex: 1, width: "100%", padding: "16px 0", overflow: "hidden" }}>
+                      <Editor
+                        language="javascript"
+                        theme={theme === "default" || theme === "minimalist" ? "light" : "vs-dark"}
+                        value={(node[currentField] as string) ?? ""}
+                        onChange={(val) =>
+                          updateNode(editingScript.key, {
+                            [currentField]: val,
+                          })
+                        }
+                        options={{ minimap: { enabled: false } }}
+                      />
+                    </div>
                   </div>
 
                   {/* Examples sidebar */}

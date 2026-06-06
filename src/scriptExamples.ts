@@ -347,9 +347,10 @@ nodes.get('TooltipLabel').update({ content: '🔗 Opens: ' + nodes.get('MyLink')
 /** Return an example script for the given node type + event, or "" if none */
 export function getScriptExample(
   nodeType: NodeType,
-  event: EventName
+  event: EventName | "code"
 ): string {
-  return SCRIPT_EXAMPLES[nodeType]?.[event] ?? "";
+  if (event === "code") return "";
+  return SCRIPT_EXAMPLES[nodeType]?.[event as EventName] ?? "";
 }
 
 /** Events that are relevant for a given node type */
