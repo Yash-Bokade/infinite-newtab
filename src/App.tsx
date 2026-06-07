@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import type { Mode, Node } from "./types";
 import { useNodes } from "./useNodes";
+import Editor from "@monaco-editor/react";
 import LeftPanel from "./LeftPanel";
 import NodeRenderer from "./NodeRenderer";
 import { getScriptExample, RELEVANT_EVENTS } from "./scriptExamples";
@@ -510,24 +511,25 @@ export default function App() {
                         ))}
                       </div>
                     )}
-                    <textarea
-                      className="app-modal-textarea"
-                      value={(node[currentField] as string) ?? ""}
-                      onChange={(e) =>
-                        updateNode(editingScript.key, {
-                          [currentField]: e.target.value,
-                        })
-                      }
-                      spellCheck={false}
-                      placeholder={
-                        currentExample
-                          ? `// Click 'Examples ►' to load example code for ${currentField}`
-                          : `// Write your ${currentField} script here
-// nodes.get('NodeName').setValue(value)
-// nodes.get('NodeName').getValue()
-// nodes.get('NodeName').update({ ... })`
-                      }
-                    />
+                    <div style={{ flex: 1, width: "100%", overflow: "hidden" }}>
+                      <Editor
+                        height="100%"
+                        defaultLanguage="javascript"
+                        theme={theme === "light" ? "vs-light" : "vs-dark"}
+                        value={(node[currentField] as string) ?? ""}
+                        onChange={(value) =>
+                          updateNode(editingScript.key, {
+                            [currentField]: value,
+                          })
+                        }
+                        options={{
+                          minimap: { enabled: false },
+                          fontSize: 14,
+                          wordWrap: "on",
+                          padding: { top: 16 },
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {/* Examples sidebar */}
