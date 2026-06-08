@@ -60,3 +60,9 @@ export type Node = {
 export type CanvasData = {
   nodes: Node[];
 };
+
+export type Template = {
+  id: string;
+  name: string;
+  nodes: Node[];
+};

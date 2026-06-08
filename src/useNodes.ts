@@ -287,6 +287,10 @@ export function useNodes() {
     setNodes(DEFAULT_NODES);
   }, []);
 
+  const setAllNodes = useCallback((newNodes: Node[]) => {
+    setNodes(newNodes);
+  }, []);
+
   const reparentNode = useCallback((key: string, targetParentKey: string | null, newPosition?: [number, number]) => {
     setNodes((prev) => {
       // Find the node
@@ -361,5 +365,5 @@ export function useNodes() {
     });
   }, []);
 
-  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, addNode, findNode, findNodeParent, bringToFront, sendToBack, reparentNode, resetToDefault };
+  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, addNode, findNode, findNodeParent, bringToFront, sendToBack, reparentNode, resetToDefault, setAllNodes };
 }

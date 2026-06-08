@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import type { Mode, Node } from "./types";
+import type { Mode, Node, Template } from "./types";
 import { useNodes } from "./useNodes";
 import Editor from "@monaco-editor/react";
 import LeftPanel from "./LeftPanel";
@@ -21,8 +21,21 @@ export default function App() {
     return localStorage.getItem("home-canvas-theme") || "default";
   });
   const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
+  const [templates, setTemplates] = useState<Template[]>(() => {
+    try {
+      const raw = localStorage.getItem("home-canvas-templates");
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // ignore
+    }
+    return [];
+  });
 
-  const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
+  useEffect(() => {
+    localStorage.setItem("home-canvas-templates", JSON.stringify(templates));
+  }, [templates]);
+
+  const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode, setAllNodes } = useNodes();
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -133,6 +146,97 @@ export default function App() {
   const selectedNodes = selectedKeys.map(k => findNode(k)).filter((n): n is Node => n !== null);
   const selectedNode = selectedNodes.length === 1 ? selectedNodes[0] : null;
 
+  function handleSaveTemplate(name: string) {
+    if (selectedNodes.length === 0) return;
+
+    // We only want to save the top-level selected nodes, children are saved automatically
+    const topLevelNodes = selectedNodes.filter(n => {
+      const parent = findNodeParent(n.key);
+      // It's top level if it has no parent, or if its parent is NOT in the selection
+      return !parent || !selectedKeys.includes(parent.key);
+    });
+
+    // Deep clone the nodes
+    function deepClone(list: Node[]): Node[] {
+      return list.map(n => ({
+        ...n,
+        children: n.children ? deepClone(n.children) : []
+      }));
+    }
+
+    const template: Template = {
+      id: Math.random().toString(36).slice(2, 10),
+      name: name || "Untitled Template",
+      nodes: deepClone(topLevelNodes),
+    };
+    setTemplates(prev => [...prev, template]);
+  }
+
+  function handleAddTemplate(templateId: string) {
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    const rootKeyMap = new Map<string, string>();
+    function instantiateNodeTree(list: Node[], isRoot: boolean): Node[] {
+       return list.map(n => {
+         const newKey = Math.random().toString(36).slice(2, 10);
+         if (isRoot) rootKeyMap.set(n.key, newKey);
+         return {
+           ...n,
+           key: newKey,
+           position: isRoot ? [n.position[0] + 20, n.position[1] + 20] as [number, number] : [...n.position] as [number, number],
+           children: n.children ? instantiateNodeTree(n.children, false) : []
+         };
+       });
+    }
+
+    const newNodes = instantiateNodeTree(template.nodes, true);
+    for (const n of newNodes) {
+       addNode(n);
+    }
+    setSelectedKeys(Array.from(rootKeyMap.values()));
+  }
+
+  function handleDeleteTemplate(templateId: string) {
+    setTemplates(prev => prev.filter(t => t.id !== templateId));
+  }
+
+  function handleExportJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ nodes }));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", "canvas-export.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }
+
+  function handleImportJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target?.result as string);
+          if (parsed && Array.isArray(parsed.nodes)) {
+            setAllNodes(parsed.nodes);
+            setSelectedKeys([]);
+          } else {
+            alert("Invalid JSON format");
+          }
+        } catch {
+          alert("Error parsing JSON file");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
   function handleSelect(key: string, multi: boolean) {
     setSelectedKeys((prev) => {
       if (multi) {
@@ -196,6 +300,12 @@ export default function App() {
       {mode === "edit" && (
         <LeftPanel
           selectedNodes={selectedNodes}
+          templates={templates}
+          onSaveTemplate={handleSaveTemplate}
+          onAddTemplate={handleAddTemplate}
+          onDeleteTemplate={handleDeleteTemplate}
+          onExportJSON={handleExportJSON}
+          onImportJSON={handleImportJSON}
           onUpdate={updateNode}
           onDelete={(key) => {
             deleteNode(key);
