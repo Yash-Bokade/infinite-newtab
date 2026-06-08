@@ -1,5 +1,6 @@
-import type { Node, NodeType } from "./types";
+import type { Node, NodeType, Template } from "./types";
 import { DEFAULT_CUSTOM_CODE } from "./CustomNodeRunner";
+import { useState } from "react";
 import { getScriptExample, RELEVANT_EVENTS } from "./scriptExamples";
 import { IconPicker } from "./IconPicker";
 
@@ -105,11 +106,18 @@ interface LeftPanelProps extends Props {
   onEditScript?: (key: string, field: keyof Node, title: string) => void;
   theme: string;
   onThemeChange: (v: string) => void;
+  templates: Template[];
+  onSaveTemplate: (name: string) => void;
+  onAddTemplate: (id: string) => void;
+  onDeleteTemplate: (id: string) => void;
+  onExportJSON: () => void;
+  onImportJSON: () => void;
 }
 
-export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onDuplicate, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript, theme, onThemeChange }: LeftPanelProps) {
+export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onDuplicate, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript, theme, onThemeChange, templates, onSaveTemplate, onAddTemplate, onDeleteTemplate, onExportJSON, onImportJSON }: LeftPanelProps) {
   const nodeTypes: NodeType[] = ["container", "text", "image", "link", "button", "custom", "progress", "radio", "checkbox", "input", "label", "fetch", "storage"];
   const selected = selectedNodes.length === 1 ? selectedNodes[0] : null;
+  const [templateName, setTemplateName] = useState("");
 
   return (
     <aside className="lp-root">
@@ -144,6 +152,10 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
                 onChange={onThemeChange}
               />
             </Field>
+            <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+               <button className="lp-add-btn" onClick={onExportJSON} style={{ flex: 1, justifyContent: "center" }}>Export JSON</button>
+               <button className="lp-add-btn" onClick={onImportJSON} style={{ flex: 1, justifyContent: "center" }}>Import JSON</button>
+            </div>
           </div>
         )}
 
@@ -155,6 +167,23 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
             >
               Duplicate {selectedNodes.length} nodes
             </button>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <input
+                className="lp-input"
+                placeholder="Template name"
+                value={templateName}
+                onChange={e => setTemplateName(e.target.value)}
+              />
+              <button
+                className="lp-add-btn"
+                onClick={() => {
+                  onSaveTemplate(templateName);
+                  setTemplateName("");
+                }}
+              >
+                Save
+              </button>
+            </div>
              <button
               className="lp-delete-btn"
               onClick={() => onDeleteMultiple(selectedNodes.map(n => n.key))}
@@ -475,6 +504,23 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
             >
               Duplicate node
             </button>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <input
+                className="lp-input"
+                placeholder="Template name"
+                value={templateName}
+                onChange={e => setTemplateName(e.target.value)}
+              />
+              <button
+                className="lp-add-btn"
+                onClick={() => {
+                  onSaveTemplate(templateName);
+                  setTemplateName("");
+                }}
+              >
+                Save
+              </button>
+            </div>
             <button
               className="lp-delete-btn"
               onClick={() => onDelete(selected.key)}
@@ -498,6 +544,34 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
               <span className="lp-add-icon">{nodeIcon(t)}</span>
               {t}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Templates ── */}
+      <div className="lp-section lp-add">
+        <p className="lp-section-title">Templates</p>
+        <div className="lp-add-grid">
+          {templates.length === 0 && <div className="lp-muted" style={{ fontSize: 12 }}>No templates saved</div>}
+          {templates.map((t) => (
+            <div key={t.id} style={{ display: 'flex', gap: 4 }}>
+               <button
+                 className="lp-add-btn"
+                 style={{ flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                 onClick={() => onAddTemplate(t.id)}
+                 title={t.name}
+               >
+                 📦 {t.name}
+               </button>
+               <button
+                 className="lp-delete-btn"
+                 style={{ width: 24, padding: 0, flexShrink: 0 }}
+                 onClick={() => onDeleteTemplate(t.id)}
+                 title="Delete template"
+               >
+                 ✕
+               </button>
+            </div>
           ))}
         </div>
       </div>
