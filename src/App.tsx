@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import type { Mode, Node } from "./types";
-import { useNodes } from "./useNodes";
+import { useNodes, generateNewKeys } from "./useNodes";
+import { useTemplates } from "./useTemplates";
 import Editor from "@monaco-editor/react";
 import LeftPanel from "./LeftPanel";
 import NodeRenderer from "./NodeRenderer";
@@ -22,7 +23,8 @@ export default function App() {
   });
   const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
 
-  const { nodes, addNode, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
+  const { nodes, addNode, addMultipleNodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
+  const { templates, saveTemplate, deleteTemplate } = useTemplates();
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -189,6 +191,57 @@ export default function App() {
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
+  const handleSaveTemplate = () => {
+    if (selectedNodes.length === 0) return;
+    const name = prompt("Enter template name:");
+    if (!name) return;
+    saveTemplate(name, selectedNodes);
+  };
+
+  const handleAddTemplate = (tplNodes: Node[]) => {
+    const copiedNodes = generateNewKeys(tplNodes, true); // apply offset so they drop cleanly
+    if (selectedNode) {
+      addMultipleNodes(copiedNodes, selectedNode.key);
+    } else {
+      addMultipleNodes(copiedNodes);
+    }
+  };
+
+  const handleExportCanvas = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(nodes, null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", "home-canvas-export.json");
+    dlAnchorElem.click();
+  };
+
+  const handleImportCanvas = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const content = event.target?.result as string;
+          const parsed = JSON.parse(content) as Node[];
+          // ensure valid format, generate new keys
+          const copiedNodes = generateNewKeys(parsed, true);
+          addMultipleNodes(copiedNodes);
+        } catch (err) {
+          console.error("Failed to parse JSON", err);
+          alert("Invalid JSON file");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
 
   return (
     <div id="app-root">
@@ -224,6 +277,12 @@ export default function App() {
           }
             theme={theme}
             onThemeChange={setTheme}
+            templates={templates}
+            onAddTemplate={handleAddTemplate}
+            onDeleteTemplate={deleteTemplate}
+            onSaveTemplate={handleSaveTemplate}
+            onExportCanvas={handleExportCanvas}
+            onImportCanvas={handleImportCanvas}
         />
       )}
 

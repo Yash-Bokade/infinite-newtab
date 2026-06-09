@@ -2,6 +2,7 @@ import type { Node, NodeType } from "./types";
 import { DEFAULT_CUSTOM_CODE } from "./CustomNodeRunner";
 import { getScriptExample, RELEVANT_EVENTS } from "./scriptExamples";
 import { IconPicker } from "./IconPicker";
+import type { Template } from "./useTemplates";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -105,9 +106,15 @@ interface LeftPanelProps extends Props {
   onEditScript?: (key: string, field: keyof Node, title: string) => void;
   theme: string;
   onThemeChange: (v: string) => void;
+  templates: Template[];
+  onAddTemplate: (nodes: Node[]) => void;
+  onDeleteTemplate: (id: string) => void;
+  onSaveTemplate: () => void;
+  onExportCanvas: () => void;
+  onImportCanvas: () => void;
 }
 
-export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onDuplicate, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript, theme, onThemeChange }: LeftPanelProps) {
+export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteMultiple, onDuplicate, onAdd, onDeselect, onBringToFront, onSendToBack, onEditScript, theme, onThemeChange, templates, onAddTemplate, onDeleteTemplate, onSaveTemplate, onExportCanvas, onImportCanvas }: LeftPanelProps) {
   const nodeTypes: NodeType[] = ["container", "text", "image", "link", "button", "custom", "progress", "radio", "checkbox", "input", "label", "fetch", "storage"];
   const selected = selectedNodes.length === 1 ? selectedNodes[0] : null;
 
@@ -144,6 +151,14 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
                 onChange={onThemeChange}
               />
             </Field>
+            <div className="lp-row" style={{ marginTop: 8 }}>
+              <button className="lp-add-btn" onClick={onExportCanvas}>
+                Export JSON
+              </button>
+              <button className="lp-add-btn" onClick={onImportCanvas}>
+                Import JSON
+              </button>
+            </div>
           </div>
         )}
 
@@ -154,6 +169,12 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
               onClick={() => onDuplicate(selectedNodes.map(n => n.key))}
             >
               Duplicate {selectedNodes.length} nodes
+            </button>
+            <button
+              className="lp-add-btn"
+              onClick={onSaveTemplate}
+            >
+              Save as Template
             </button>
              <button
               className="lp-delete-btn"
@@ -476,6 +497,12 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
               Duplicate node
             </button>
             <button
+              className="lp-add-btn"
+              onClick={onSaveTemplate}
+            >
+              Save as Template
+            </button>
+            <button
               className="lp-delete-btn"
               onClick={() => onDelete(selected.key)}
             >
@@ -500,6 +527,37 @@ export default function LeftPanel({ selectedNodes, onUpdate, onDelete, onDeleteM
             </button>
           ))}
         </div>
+      </div>
+
+      {/* ── Templates ── */}
+      <div className="lp-section lp-add" style={{ marginTop: 8 }}>
+        <p className="lp-section-title">Templates</p>
+        {templates.length === 0 ? (
+          <p className="lp-muted" style={{ fontSize: 12, padding: "0 8px" }}>No templates saved yet.</p>
+        ) : (
+          <div className="lp-add-grid">
+            {templates.map((tpl) => (
+              <div key={tpl.id} style={{ display: 'flex', gap: 4, width: '100%' }}>
+                <button
+                  className="lp-add-btn"
+                  style={{ flex: 1, justifyContent: "flex-start" }}
+                  onClick={() => onAddTemplate(tpl.nodes)}
+                >
+                  <span className="lp-add-icon">📦</span>
+                  {tpl.name}
+                </button>
+                <button
+                  className="lp-delete-btn"
+                  style={{ width: 32, padding: 0 }}
+                  title="Delete Template"
+                  onClick={() => onDeleteTemplate(tpl.id)}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </aside>
   );
