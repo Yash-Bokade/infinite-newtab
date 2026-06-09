@@ -131,6 +131,27 @@ function removeNodeFromTree(nodes: Node[], key: string): Node[] {
     );
 }
 
+export function generateNewKeys(nodes: Node[], applyOffset: boolean = false): Node[] {
+  const rootKeyMap = new Map<string, string>();
+  for (const n of nodes) {
+    const newKey = Math.random().toString(36).slice(2, 10);
+    rootKeyMap.set(n.key, newKey);
+  }
+
+  function deepCopyNode(node: Node, isRoot: boolean): Node {
+    const newKey = isRoot && rootKeyMap.has(node.key) ? rootKeyMap.get(node.key)! : Math.random().toString(36).slice(2, 10);
+    const copiedNode = {
+      ...node,
+      key: newKey,
+      position: (isRoot && applyOffset) ? [node.position[0] + 20, node.position[1] + 20] as [number, number] : [...node.position] as [number, number],
+      children: node.children ? node.children.map(c => deepCopyNode(c, false)) : []
+    };
+    return copiedNode;
+  }
+
+  return nodes.map(n => deepCopyNode(n, true));
+}
+
 export function useNodes() {
   const [nodes, setNodes] = useState<Node[]>(loadNodes);
 
@@ -165,24 +186,16 @@ export function useNodes() {
     setNodes((prev) => {
       let nextNodes = [...prev];
 
-      function deepCopyNode(node: Node, isRoot: boolean): Node {
-        const newKey = isRoot && rootKeyMap.has(node.key) ? rootKeyMap.get(node.key)! : Math.random().toString(36).slice(2, 10);
-        const copiedNode = {
-          ...node,
-          key: newKey,
-          position: isRoot ? [node.position[0] + 20, node.position[1] + 20] as [number, number] : [...node.position] as [number, number],
-          children: node.children ? node.children.map(c => deepCopyNode(c, false)) : []
-        };
-        return copiedNode;
-      }
-
       for (const key of keys) {
         // Find the parent list containing the node
         function findAndDuplicate(list: Node[]): Node[] {
           const index = list.findIndex(n => n.key === key);
           if (index !== -1) {
             const originalNode = list[index];
-            const copiedNode = deepCopyNode(originalNode, true);
+            const copiedNodes = generateNewKeys([originalNode], true);
+            const copiedNode = copiedNodes[0];
+            // Fix root key
+            copiedNode.key = rootKeyMap.get(key)!;
             const newList = [...list];
             newList.splice(index + 1, 0, copiedNode);
             return newList;
@@ -229,6 +242,26 @@ export function useNodes() {
         return list.map((n) => {
           if (n.key === parentId) {
             return { ...n, children: [...(n.children || []), node] };
+          }
+          if (n.children && n.children.length > 0) {
+            return { ...n, children: insertIntoTree(n.children) };
+          }
+          return n;
+        });
+      }
+
+      return insertIntoTree(prev);
+    });
+  }, []);
+
+  const addMultipleNodes = useCallback((newNodes: Node[], parentId?: string) => {
+    setNodes((prev) => {
+      if (!parentId) return [...prev, ...newNodes];
+
+      function insertIntoTree(list: Node[]): Node[] {
+        return list.map((n) => {
+          if (n.key === parentId) {
+            return { ...n, children: [...(n.children || []), ...newNodes] };
           }
           if (n.children && n.children.length > 0) {
             return { ...n, children: insertIntoTree(n.children) };
@@ -361,5 +394,5 @@ export function useNodes() {
     });
   }, []);
 
-  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, addNode, findNode, findNodeParent, bringToFront, sendToBack, reparentNode, resetToDefault };
+  return { nodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, addNode, addMultipleNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode, resetToDefault };
 }
