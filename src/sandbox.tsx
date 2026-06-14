@@ -80,11 +80,47 @@ window.addEventListener("message", (event) => {
   }
 });
 
+// ── Console log interception ────────────────────────────────────────────────
+const originalConsole = {
+  log: console.log,
+  warn: console.warn,
+  error: console.error,
+  info: console.info,
+};
+
+function safeStringify(args: unknown[]) {
+  try {
+    return args.map((a) =>
+      typeof a === "string" ? a : JSON.stringify(a, null, 2)
+    ).join(" ");
+  } catch {
+    return args.map((a) => String(a)).join(" ");
+  }
+}
+
+console.log = (...args) => {
+  originalConsole.log(...args);
+  window.parent.postMessage({ type: "cnr:log", level: "info", message: safeStringify(args) }, "*");
+};
+console.info = (...args) => {
+  originalConsole.info(...args);
+  window.parent.postMessage({ type: "cnr:log", level: "info", message: safeStringify(args) }, "*");
+};
+console.warn = (...args) => {
+  originalConsole.warn(...args);
+  window.parent.postMessage({ type: "cnr:log", level: "warn", message: safeStringify(args) }, "*");
+};
+console.error = (...args) => {
+  originalConsole.error(...args);
+  window.parent.postMessage({ type: "cnr:log", level: "error", message: safeStringify(args) }, "*");
+};
+
 // ── window.__hc — bridge API available inside all custom node components ──────
 // Usage:
 //   window.__hc.storage.get('myKey', function(val) { ... })
 //   window.__hc.storage.set('myKey', value)
 //   window.__hc.open('https://example.com')   // opens in new tab via parent
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).__hc = {
   storage: {
     get(key: string, cb: (val: unknown) => void) {

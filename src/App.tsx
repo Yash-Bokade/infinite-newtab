@@ -22,6 +22,7 @@ export default function App() {
     return localStorage.getItem("home-canvas-theme") || "default";
   });
   const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
+  const [consoleLogs, setConsoleLogs] = useState<{ id: string; level: string; message: string; time: string }[]>([]);
 
   const { nodes, addNode, addMultipleNodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
   const { templates, saveTemplate, deleteTemplate } = useTemplates();
@@ -30,6 +31,90 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("home-canvas-theme", theme);
   }, [theme]);
+
+  // ── Console log interception ───────────────────────────────────────────────
+  useEffect(() => {
+    const originalConsole = {
+      log: console.log,
+      warn: console.warn,
+      error: console.error,
+      info: console.info,
+    };
+
+    function addLog(level: string, args: unknown[]) {
+      const now = new Date().toLocaleTimeString(undefined, {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+      let message = "";
+      try {
+        message = args
+          .map((a) => (typeof a === "string" ? a : JSON.stringify(a, null, 2)))
+          .join(" ");
+      } catch {
+        message = args.map((a) => String(a)).join(" ");
+      }
+      setConsoleLogs((prev) => {
+        const newLogs = [
+          ...prev,
+          { id: Math.random().toString(36).slice(2), level, message, time: now },
+        ];
+        return newLogs.slice(-100);
+      });
+    }
+
+    console.log = (...args) => {
+      originalConsole.log(...args);
+      addLog("info", args);
+    };
+    console.info = (...args) => {
+      originalConsole.info(...args);
+      addLog("info", args);
+    };
+    console.warn = (...args) => {
+      originalConsole.warn(...args);
+      addLog("warn", args);
+    };
+    console.error = (...args) => {
+      originalConsole.error(...args);
+      addLog("error", args);
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "cnr:log") {
+        const now = new Date().toLocaleTimeString(undefined, {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        setConsoleLogs((prev) => {
+          const newLogs = [
+            ...prev,
+            {
+              id: Math.random().toString(36).slice(2),
+              level: event.data.level,
+              message: event.data.message,
+              time: now,
+            },
+          ];
+          return newLogs.slice(-100);
+        });
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      console.log = originalConsole.log;
+      console.info = originalConsole.info;
+      console.warn = originalConsole.warn;
+      console.error = originalConsole.error;
+      window.removeEventListener("message", handleMessage);
+    };
+  }, []);
 
   // ── Canvas pan & zoom ──────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -588,6 +673,89 @@ export default function App() {
                           padding: { top: 16 },
                         }}
                       />
+                    </div>
+                    {/* Console logs */}
+                    <div
+                      style={{
+                        height: 160,
+                        borderTop: "1px solid var(--border)",
+                        background: "var(--code-bg)",
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: "4px 8px",
+                          borderBottom: "1px solid var(--border)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "var(--text-h)",
+                        }}
+                      >
+                        <span>Console Output</span>
+                        <button
+                          onClick={() => setConsoleLogs([])}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--text)",
+                            cursor: "pointer",
+                            fontSize: 10,
+                          }}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <div
+                        style={{
+                          flex: 1,
+                          overflowY: "auto",
+                          padding: 8,
+                          fontFamily: "monospace",
+                          fontSize: 11,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 4,
+                        }}
+                      >
+                        {consoleLogs.length === 0 ? (
+                          <div style={{ color: "var(--text)", opacity: 0.5 }}>
+                            No logs to display...
+                          </div>
+                        ) : (
+                          consoleLogs.map((log) => (
+                            <div
+                              key={log.id}
+                              style={{
+                                display: "flex",
+                                gap: 8,
+                                color:
+                                  log.level === "error"
+                                    ? "#ef4444"
+                                    : log.level === "warn"
+                                    ? "#f59e0b"
+                                    : "var(--text-h)",
+                                borderBottom: "1px solid var(--border)",
+                                paddingBottom: 2,
+                              }}
+                            >
+                              <span style={{ opacity: 0.5 }}>[{log.time}]</span>
+                              <span
+                                style={{
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-all",
+                                }}
+                              >
+                                {log.message}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
 
