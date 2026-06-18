@@ -86,6 +86,7 @@ const originalConsole = {
   warn: console.warn,
   error: console.error,
   info: console.info,
+  clear: console.clear,
 };
 
 function safeStringify(args: unknown[]) {
@@ -113,6 +114,10 @@ console.warn = (...args) => {
 console.error = (...args) => {
   originalConsole.error(...args);
   window.parent.postMessage({ type: "cnr:log", level: "error", message: safeStringify(args) }, "*");
+};
+console.clear = () => {
+  originalConsole.clear();
+  window.parent.postMessage({ type: "cnr:clear" }, "*");
 };
 
 // ── window.__hc — bridge API available inside all custom node components ──────
