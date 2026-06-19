@@ -33,6 +33,14 @@ export default function App() {
   }, [theme]);
 
   // ── Console log interception ───────────────────────────────────────────────
+  const consoleLogsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (consoleLogsEndRef.current) {
+      consoleLogsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [consoleLogs]);
+
   useEffect(() => {
     const originalConsole = {
       log: console.log,
@@ -755,6 +763,7 @@ export default function App() {
                             </div>
                           ))
                         )}
+                        <div ref={consoleLogsEndRef} />
                       </div>
                     </div>
                   </div>
