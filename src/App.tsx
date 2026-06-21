@@ -22,7 +22,7 @@ export default function App() {
     return localStorage.getItem("home-canvas-theme") || "default";
   });
   const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
-  const [consoleLogs, setConsoleLogs] = useState<{ id: string; level: string; message: string; time: string }[]>([]);
+  const [consoleLogs, setConsoleLogs] = useState<Record<string, { id: string; level: string; message: string; time: string }[]>>({});
 
   const { nodes, addNode, addMultipleNodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
   const { templates, saveTemplate, deleteTemplate } = useTemplates();
@@ -34,56 +34,9 @@ export default function App() {
 
   // ── Console log interception ───────────────────────────────────────────────
   useEffect(() => {
-    const originalConsole = {
-      log: console.log,
-      warn: console.warn,
-      error: console.error,
-      info: console.info,
-    };
-
-    function addLog(level: string, args: unknown[]) {
-      const now = new Date().toLocaleTimeString(undefined, {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-      let message = "";
-      try {
-        message = args
-          .map((a) => (typeof a === "string" ? a : JSON.stringify(a, null, 2)))
-          .join(" ");
-      } catch {
-        message = args.map((a) => String(a)).join(" ");
-      }
-      setConsoleLogs((prev) => {
-        const newLogs = [
-          ...prev,
-          { id: Math.random().toString(36).slice(2), level, message, time: now },
-        ];
-        return newLogs.slice(-100);
-      });
-    }
-
-    console.log = (...args) => {
-      originalConsole.log(...args);
-      addLog("info", args);
-    };
-    console.info = (...args) => {
-      originalConsole.info(...args);
-      addLog("info", args);
-    };
-    console.warn = (...args) => {
-      originalConsole.warn(...args);
-      addLog("warn", args);
-    };
-    console.error = (...args) => {
-      originalConsole.error(...args);
-      addLog("error", args);
-    };
-
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === "cnr:log") {
+      if (event.data?.type === "cnr:log" && event.data.nodeKey) {
+        const nodeKey = event.data.nodeKey;
         const now = new Date().toLocaleTimeString(undefined, {
           hour12: false,
           hour: "2-digit",
@@ -91,8 +44,9 @@ export default function App() {
           second: "2-digit",
         });
         setConsoleLogs((prev) => {
+          const prevLogs = prev[nodeKey] || [];
           const newLogs = [
-            ...prev,
+            ...prevLogs,
             {
               id: Math.random().toString(36).slice(2),
               level: event.data.level,
@@ -100,7 +54,7 @@ export default function App() {
               time: now,
             },
           ];
-          return newLogs.slice(-100);
+          return { ...prev, [nodeKey]: newLogs.slice(-100) };
         });
       }
     };
@@ -108,10 +62,6 @@ export default function App() {
     window.addEventListener("message", handleMessage);
 
     return () => {
-      console.log = originalConsole.log;
-      console.info = originalConsole.info;
-      console.warn = originalConsole.warn;
-      console.error = originalConsole.error;
       window.removeEventListener("message", handleMessage);
     };
   }, []);
@@ -698,7 +648,7 @@ export default function App() {
                       >
                         <span>Console Output</span>
                         <button
-                          onClick={() => setConsoleLogs([])}
+                          onClick={() => setConsoleLogs((prev) => ({ ...prev, [editingScript.key]: [] }))}
                           style={{
                             background: "transparent",
                             border: "none",
@@ -722,12 +672,12 @@ export default function App() {
                           gap: 4,
                         }}
                       >
-                        {consoleLogs.length === 0 ? (
+                        {(consoleLogs[editingScript.key] || []).length === 0 ? (
                           <div style={{ color: "var(--text)", opacity: 0.5 }}>
                             No logs to display...
                           </div>
                         ) : (
-                          consoleLogs.map((log) => (
+                          (consoleLogs[editingScript.key] || []).map((log) => (
                             <div
                               key={log.id}
                               style={{

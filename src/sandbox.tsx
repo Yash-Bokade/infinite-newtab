@@ -22,7 +22,7 @@ function buildAndRender(code: string) {
 
     const exportsObj: Record<string, unknown> = {};
 
-    // eslint-disable-next-line no-new-func
+
     const factory = new Function(
       "React",
       "require",
@@ -60,8 +60,11 @@ function buildAndRender(code: string) {
 // ── postMessage storage result listener ──────────────────────────────────────
 const _pendingGets = new Map<string, (val: unknown) => void>();
 
+let currentNodeKey = "";
+
 window.addEventListener("message", (event) => {
   if (event.data?.type === "cnr:render") {
+    if (event.data.nodeKey) currentNodeKey = event.data.nodeKey;
     // Apply CSS vars passed from parent so user components can use them
     if (event.data.cssVars) {
       const root = document.documentElement;
@@ -100,19 +103,19 @@ function safeStringify(args: unknown[]) {
 
 console.log = (...args) => {
   originalConsole.log(...args);
-  window.parent.postMessage({ type: "cnr:log", level: "info", message: safeStringify(args) }, "*");
+  window.parent.postMessage({ type: "cnr:log", level: "info", message: safeStringify(args), nodeKey: currentNodeKey }, "*");
 };
 console.info = (...args) => {
   originalConsole.info(...args);
-  window.parent.postMessage({ type: "cnr:log", level: "info", message: safeStringify(args) }, "*");
+  window.parent.postMessage({ type: "cnr:log", level: "info", message: safeStringify(args), nodeKey: currentNodeKey }, "*");
 };
 console.warn = (...args) => {
   originalConsole.warn(...args);
-  window.parent.postMessage({ type: "cnr:log", level: "warn", message: safeStringify(args) }, "*");
+  window.parent.postMessage({ type: "cnr:log", level: "warn", message: safeStringify(args), nodeKey: currentNodeKey }, "*");
 };
 console.error = (...args) => {
   originalConsole.error(...args);
-  window.parent.postMessage({ type: "cnr:log", level: "error", message: safeStringify(args) }, "*");
+  window.parent.postMessage({ type: "cnr:log", level: "error", message: safeStringify(args), nodeKey: currentNodeKey }, "*");
 };
 
 // ── window.__hc — bridge API available inside all custom node components ──────
