@@ -864,6 +864,7 @@ export default function NodeRenderer({
       >
         {selectDot}
         <CustomNodeRunner
+          nodeKey={node.key}
           code={node.code ?? ""}
           width={node.size[0]}
           height={node.size[1]}

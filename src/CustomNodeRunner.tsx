@@ -37,6 +37,7 @@ export default function Component() {
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface Props {
+  nodeKey: string;
   code: string;
   /** Kept for API compatibility — forwarded as CSS vars to sandbox */
   width: number;
@@ -46,7 +47,7 @@ interface Props {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export default function CustomNodeRunner({ code, width: _w, height: _h, canEdit }: Props) {
+export default function CustomNodeRunner({ nodeKey, code, width: _w, height: _h, canEdit }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -82,8 +83,8 @@ export default function CustomNodeRunner({ code, width: _w, height: _h, canEdit 
       cssVars[v] = cs.getPropertyValue(v).trim();
     }
 
-    iframe.contentWindow.postMessage({ type: "cnr:render", code, cssVars }, "*");
-  }, [code, ready]);
+    iframe.contentWindow.postMessage({ type: "cnr:render", code, cssVars, nodeKey }, "*");
+  }, [code, ready, nodeKey]);
 
   return (
     <div className="cnr-wrapper" style={{ position: "relative" }}>
