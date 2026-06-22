@@ -23,6 +23,7 @@ export default function App() {
   });
   const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
   const [consoleLogs, setConsoleLogs] = useState<{ id: string; level: string; message: string; time: string }[]>([]);
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   const { nodes, addNode, addMultipleNodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
   const { templates, saveTemplate, deleteTemplate } = useTemplates();
@@ -31,6 +32,13 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("home-canvas-theme", theme);
   }, [theme]);
+
+  // Auto-scroll logs
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [consoleLogs, editingScript]);
 
   // ── Console log interception ───────────────────────────────────────────────
   useEffect(() => {
@@ -755,6 +763,7 @@ export default function App() {
                             </div>
                           ))
                         )}
+                        <div ref={logsEndRef} />
                       </div>
                     </div>
                   </div>
