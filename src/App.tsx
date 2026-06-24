@@ -23,6 +23,13 @@ export default function App() {
   });
   const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
   const [consoleLogs, setConsoleLogs] = useState<{ id: string; level: string; message: string; time: string }[]>([]);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+    }
+  }, [consoleLogs, editingScript]);
 
   const { nodes, addNode, addMultipleNodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
   const { templates, saveTemplate, deleteTemplate } = useTemplates();
@@ -711,6 +718,7 @@ export default function App() {
                         </button>
                       </div>
                       <div
+                        ref={logsContainerRef}
                         style={{
                           flex: 1,
                           overflowY: "auto",
