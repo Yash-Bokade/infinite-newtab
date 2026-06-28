@@ -26,6 +26,13 @@ export default function App() {
 
   const { nodes, addNode, addMultipleNodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
   const { templates, saveTemplate, deleteTemplate } = useTemplates();
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [consoleLogs]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -755,6 +762,7 @@ export default function App() {
                             </div>
                           ))
                         )}
+                        <div ref={logsEndRef} />
                       </div>
                     </div>
                   </div>
