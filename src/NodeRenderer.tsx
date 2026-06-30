@@ -432,6 +432,7 @@ export default function NodeRenderer({
   const fontStyle = buildFontStyle(node.font);
 
   // ── Script Execution ──────────────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const runScript = (script?: string, localEvent?: any) => {
     if (canEdit || !script) return;
     try {
@@ -450,6 +451,7 @@ export default function NodeRenderer({
           const target = findByName(allNodes, name);
           if (!target) return null;
           return {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setValue: (val: any) => {
               onUpdate(target.key, { value: val });
               // Also persist if it's a storage node
@@ -522,7 +524,9 @@ export default function NodeRenderer({
         if (stored !== null) {
           onUpdate(node.key, { value: JSON.parse(stored) });
         }
-      } catch (_e) {}
+      } catch {
+        // Ignore parse error
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canEdit, node.is, node.content, node.name]);

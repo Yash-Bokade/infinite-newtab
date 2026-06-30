@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Node } from "./types";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function evaluateTemplate(template: string, nodes: Node[]): string {
   if (!template) return "";
   let result = template;
@@ -27,6 +28,7 @@ export function evaluateTemplate(template: string, nodes: Node[]): string {
     if (!targetNode) return match;
 
     const parts = path.split('.');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let val: any = targetNode;
     for (const part of parts) {
       if (val == null) return "";
