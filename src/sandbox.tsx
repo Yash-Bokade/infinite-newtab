@@ -22,7 +22,6 @@ function buildAndRender(code: string) {
 
     const exportsObj: Record<string, unknown> = {};
 
-    // eslint-disable-next-line no-new-func
     const factory = new Function(
       "React",
       "require",
