@@ -23,6 +23,7 @@ export default function App() {
   });
   const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
   const [consoleLogs, setConsoleLogs] = useState<{ id: string; level: string; message: string; time: string }[]>([]);
+  const consoleLogsEndRef = useRef<HTMLDivElement>(null);
 
   const { nodes, addNode, addMultipleNodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
   const { templates, saveTemplate, deleteTemplate } = useTemplates();
@@ -31,6 +32,12 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("home-canvas-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (consoleLogsEndRef.current) {
+      consoleLogsEndRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [consoleLogs]);
 
   // ── Console log interception ───────────────────────────────────────────────
   useEffect(() => {
@@ -755,6 +762,7 @@ export default function App() {
                             </div>
                           ))
                         )}
+                        <div ref={consoleLogsEndRef} />
                       </div>
                     </div>
                   </div>
