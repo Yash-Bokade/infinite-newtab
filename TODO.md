@@ -29,4 +29,4 @@ Ideas and planned features to enhance the Home Canvas experience.
 - [x] **Rich Code Editor**: Replace the standard textarea in the Code Modal with a syntax-highlighting editor (like Monaco or Prism).
 - [x] **Node Templates**: Save a group of nodes (like a "Login Form" or "Weather Widget") as a template to reuse later.
 - [x] **Export/Import JSON**: Easily share your canvas setup or back it up as a single file.
-- [ ] **Console Logs in Modal**: A small console output inside the Code Modal to help debug custom components.
+- [x] **Console Logs in Modal**: A small console output inside the Code Modal to help debug custom components.
