@@ -46,7 +46,7 @@ interface Props {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export default function CustomNodeRunner({ code, width: _w, height: _h, canEdit }: Props) {
+export default function CustomNodeRunner({ code, canEdit }: Props) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
