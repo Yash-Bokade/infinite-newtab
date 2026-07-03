@@ -23,6 +23,7 @@ export default function App() {
   });
   const [guides, setGuides] = useState<{type: 'x'|'y', pos: number}[]>([]);
   const [consoleLogs, setConsoleLogs] = useState<{ id: string; level: string; message: string; time: string }[]>([]);
+  const consoleEndRef = useRef<HTMLDivElement>(null);
 
   const { nodes, addNode, addMultipleNodes, updateNode, updateMultipleNodes, deleteNode, deleteMultipleNodes, duplicateNodes, findNode, findNodeParent, bringToFront, sendToBack, reparentNode } = useNodes();
   const { templates, saveTemplate, deleteTemplate } = useTemplates();
@@ -115,6 +116,12 @@ export default function App() {
       window.removeEventListener("message", handleMessage);
     };
   }, []);
+
+  useEffect(() => {
+    if (consoleEndRef.current) {
+      consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [consoleLogs]);
 
   // ── Canvas pan & zoom ──────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -755,6 +762,7 @@ export default function App() {
                             </div>
                           ))
                         )}
+                        <div ref={consoleEndRef} />
                       </div>
                     </div>
                   </div>
