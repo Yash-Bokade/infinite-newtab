@@ -119,6 +119,13 @@ export default function App() {
   // ── Canvas pan & zoom ──────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [consoleLogs]);
   const isDragging = useRef(false);
   const hasDragged = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
@@ -755,6 +762,7 @@ export default function App() {
                             </div>
                           ))
                         )}
+                        <div ref={logsEndRef} />
                       </div>
                     </div>
                   </div>
