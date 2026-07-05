@@ -123,6 +123,11 @@ export default function App() {
   const hasDragged = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
   const offset = useRef({ x: 0, y: 0 });
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [consoleLogs]);
   const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
@@ -755,6 +760,7 @@ export default function App() {
                             </div>
                           ))
                         )}
+                        <div ref={logsEndRef} />
                       </div>
                     </div>
                   </div>
