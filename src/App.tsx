@@ -116,6 +116,15 @@ export default function App() {
     };
   }, []);
 
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll logs
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [consoleLogs]);
+
   // ── Canvas pan & zoom ──────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -755,6 +764,7 @@ export default function App() {
                             </div>
                           ))
                         )}
+                        <div ref={logsEndRef} />
                       </div>
                     </div>
                   </div>
